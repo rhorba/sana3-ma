@@ -1,0 +1,35 @@
+# Java / Maven
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Env
+.env
+.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Recordings (large binary, kept out of git; store elsewhere if needed)
+.recordings/
+
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json
+
+# Crash artifacts
+*.stackdump

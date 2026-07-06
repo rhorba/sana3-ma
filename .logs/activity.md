@@ -45,3 +45,4 @@ Tests: 36 total, all green — 3 domain unit, 7 application unit (Mockito), 3 ad
 VERIFY: ran full docker-compose smoke test (register/duplicate-email/admin-role-reject/short-password/login-wrong/login-ok/refresh/refresh-no-cookie/protected-401) —
 found and fixed a real bug (see .logs/issues.md — /error dispatch security hole) that unit tests alone missed. Coverage % measurement deferred to Batch 8 (dedicated VERIFY batch) per sprint plan; this batch's own tests are unit+integration+manual-e2e verified.
 Not pushed yet — push happens at sprint SHIP (Batch 10) per rule 7, or sooner if requested.
+Committed locally as 8154830 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).

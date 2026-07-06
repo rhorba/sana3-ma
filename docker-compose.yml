@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-sana3}
+      POSTGRES_USER: ${DB_USER:-sana3}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-sana3_dev_password}
+    ports:
+      - "${DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - sana3-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-sana3}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-sana3}
+      DB_USER: ${DB_USER:-sana3}
+      DB_PASSWORD: ${DB_PASSWORD:-sana3_dev_password}
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-32-bytes-minimum-secret}
+      JWT_ACCESS_TTL_MIN: ${JWT_ACCESS_TTL_MIN:-15}
+      JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-7}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+    ports:
+      - "${BACKEND_HOST_PORT:-8081}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  sana3-postgres-data:

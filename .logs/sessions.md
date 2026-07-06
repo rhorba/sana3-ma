@@ -20,3 +20,6 @@ Done this session:
 Next session: resume at Batch 2 (backend auth: register/login/refresh, JWT, bcrypt, tests) — see .logs/activity.md
 "PLAN 2026-07-05 — Sprint 1 batches" for full B1-B10 breakdown, and docs/stories-sana3-ma.md Epic 1 for acceptance criteria.
 Not yet pushed to origin — do that at sprint end (Batch 10 SHIP), or sooner if requested.
+
+## SESSION_START 2026-07-06
+Resumed from previous SESSION_END (2026-07-06). Continuing Sprint 1 at Batch 2: backend auth (register/login/refresh, JWT, bcrypt, tests). Batch 1 (backend Maven skeleton) confirmed done and locally committed, not yet pushed (push deferred to sprint SHIP per rule 7).

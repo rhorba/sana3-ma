@@ -44,3 +44,25 @@ Done this session:
 Next session: resume at Batch 3 (backend artisan profile — CQRS command/query, ownership auth, tests). See
 .logs/activity.md "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown and docs/stories-sana3-ma.md
 Epic 2 (or wherever artisan profile stories live) for acceptance criteria.
+
+## SESSION_START 2026-07-06
+Resumed from previous SESSION_END (2026-07-06). Continuing Sprint 1 at Batch 3: backend artisan profile (CQRS command/query, ownership auth, tests).
+
+## SESSION_END 2026-07-06
+Done this session:
+- Implemented Batch 3 (backend artisan profile): domain ArtisanProfile/ArtisanProfileRepository, application
+  UpdateArtisanProfileCommand/Handler + GetArtisanProfileQuery/Handler (CQRS-lite per ADR-1), adapter-persistence
+  JPA entity/repo/adapter (reusing Batch 1's V2 migration), adapter-web ArtisanProfileController
+  (PUT/GET /api/v1/artisan-profiles/me) with ownership from the JWT principal and a role=ARTISAN check on writes.
+- Tests: 17 new (4 domain, 5 application, 3 persistence Testcontainers, 5 web @WebMvcTest) — full suite now 46
+  tests, all green.
+- Learned during test-writing: @WebMvcTest needs real security filters active (not addFilters=false) for
+  SecurityMockMvcRequestPostProcessors.authentication(...) to populate the SecurityContext, and mutating requests
+  need .with(csrf()) since the default (non-custom) security auto-config used by the test slice has CSRF on,
+  unlike the app's real stateless SecurityConfig.
+- Ran a full docker-compose smoke test (register artisan+buyer, 404 before profile exists, create, get, update
+  keeping same id, 403 for buyer role, 401 unauthenticated, 400 validation) — all as expected, no bugs found.
+- Committed locally as 9af3ab9 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).
+
+Next session: resume at Batch 4 (frontend scaffold — Angular standalone, Material, NgRx store, routing,
+Dockerfile). See .logs/activity.md "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.

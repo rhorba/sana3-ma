@@ -46,3 +46,31 @@ VERIFY: ran full docker-compose smoke test (register/duplicate-email/admin-role-
 found and fixed a real bug (see .logs/issues.md — /error dispatch security hole) that unit tests alone missed. Coverage % measurement deferred to Batch 8 (dedicated VERIFY batch) per sprint plan; this batch's own tests are unit+integration+manual-e2e verified.
 Not pushed yet — push happens at sprint SHIP (Batch 10) per rule 7, or sooner if requested.
 Committed locally as 8154830 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).
+
+## PLAN 2026-07-06 — Batch 3 task breakdown (backend artisan profile)
+No new architecture decisions needed (CQRS-lite command/query split fixed by ADR-1; ownership rule and endpoints fixed by docs/stories-sana3-ma.md Epic 2). V2 migration (artisan_profiles + PostGIS) already exists from Batch 1.
+Task 3.1: domain — ArtisanProfile entity, ArtisanProfileRepository port, ProfileNotFoundException. Location (PostGIS point) left null/unused this batch — no lat/lng field in the AC, so no input path for it yet (YAGNI).
+Task 3.2: application — UpdateArtisanProfileCommand/Handler (upsert: create-or-update per story 2.1), GetArtisanProfileQuery/Handler (separate read path per story 2.2 CQRS note). Business rule: only role=ARTISAN may own a profile (per architecture data-model note), enforced in the command handler.
+Task 3.3: adapter-persistence — JPA ArtisanProfileEntity, Spring Data repo, RepositoryAdapter, mapper.
+Task 3.4: adapter-web — ArtisanProfileController (PUT/GET /api/v1/artisan-profiles/me), DTOs, ownership from JWT principal (UUID already set as Authentication principal by existing JwtAuthenticationFilter — no new filter needed), reuse existing error envelope.
+Task 3.5: tests — domain/application unit, adapter-persistence Testcontainers, adapter-web @WebMvcTest + security.
+Task 3.6: verify — docker-compose smoke test (create as artisan, get, reject as buyer, reject unauthenticated).
+
+## BATCH 3 DONE 2026-07-06 — Backend artisan profile (CQRS command/query)
+Domain: ArtisanProfile entity (immutable, `create`/`withDetails`), ArtisanProfileRepository port (backend/domain/.../artisanprofile/).
+Application: UpdateArtisanProfileCommand/Handler (upsert, rejects non-ARTISAN role via NotAnArtisanException), GetArtisanProfileQuery/Handler
+(read path, ProfileNotFoundException on miss), ArtisanProfileResult + mapper (backend/application/.../artisanprofile/).
+Adapter-persistence: ArtisanProfileJpaEntity (maps to existing V2 artisan_profiles table; PostGIS location column left unmapped/unused per plan),
+Spring Data repo, RepositoryAdapter, mapper.
+Adapter-web: ArtisanProfileController (PUT/GET /api/v1/artisan-profiles/me), ownership from JWT principal (UUID, already set by Batch 2's
+JwtAuthenticationFilter), role derived from the ROLE_* authority, UpsertArtisanProfileRequest/ArtisanProfileResponse DTOs,
+ArtisanProfileExceptionHandler (403 NOT_AN_ARTISAN, 404 PROFILE_NOT_FOUND, 400 VALIDATION_FAILED — reuses auth package's ApiError envelope).
+Tests: 17 new (4 domain, 5 application Mockito, 3 adapter-persistence Testcontainers, 5 adapter-web @WebMvcTest) — all green.
+Found during test-writing (not a runtime bug): @WebMvcTest needs real Spring Security filters active (not addFilters=false) for
+SecurityMockMvcRequestPostProcessors.authentication(...) to populate the SecurityContext, and PUT/GET requests need .with(csrf())
+since the default (non-custom) security auto-config used by this test slice has CSRF enabled unlike the real stateless SecurityConfig.
+VERIFY: full docker-compose smoke test (register artisan+buyer, GET /me before profile exists -> 404, PUT create -> 200, GET -> 200,
+PUT update same id with new updatedAt -> 200, PUT as buyer -> 403 NOT_AN_ARTISAN, GET unauthenticated -> 401, PUT blank displayName -> 400
+VALIDATION_FAILED) — all as expected. Full backend test suite (46 tests) green via `mvnw -o test`. Coverage % measurement still deferred to
+Batch 8 (dedicated VERIFY batch) per sprint plan.
+Not pushed yet — push happens at sprint SHIP (Batch 10) per rule 7, or sooner if requested.

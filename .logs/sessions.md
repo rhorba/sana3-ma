@@ -66,3 +66,44 @@ Done this session:
 
 Next session: resume at Batch 4 (frontend scaffold — Angular standalone, Material, NgRx store, routing,
 Dockerfile). See .logs/activity.md "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.
+
+## SESSION_START 2026-07-08
+Resumed from previous SESSION_END (2026-07-06). Continuing Sprint 1 at Batch 4: frontend scaffold (Angular
+standalone, Material, NgRx store, routing, Dockerfile).
+
+## SESSION_END 2026-07-08
+Done this session:
+- Implemented Batch 4 (frontend scaffold): `ng new` (Angular 22, standalone components, SCSS, routing) in
+  frontend/, Angular Material (azure-blue theme) with an app-shell toolbar/nav, NgRx store + effects +
+  devtools wired in app.config.ts with empty `auth` and `artisanProfile` feature slices (createFeature, no
+  actions yet — real logic lands in Batch 5/6 per ADR-2), lazy-loaded routing skeleton (home/login/register/
+  profile placeholders + wildcard not-found), ESLint via @angular-eslint/schematics, and frontend/Dockerfile
+  (multi-stage node:22-alpine build -> nginx:alpine serve).
+- Two real deviations from the approved foundation docs, both surfaced to the user and resolved before
+  proceeding (not silently changed):
+  1. Angular 22's `ng new` defaults to Vitest, not Jasmine/Karma — Karma is deprecated upstream and no longer
+     offered. User chose to adopt Vitest; updated docs/test-strategy-sana3-ma.md and docs/devops-sana3-ma.md
+     accordingly (test syntax describe/it/expect unchanged, so no rewrite needed elsewhere).
+  2. NgRx's latest release (21.1.1) peer-depends on Angular ^21, but Angular 22 was just scaffolded — NgRx
+     hasn't shipped Angular-22 support yet. User chose to stay on Angular 22 and install NgRx with
+     --legacy-peer-deps rather than downgrade Angular. Added frontend/.npmrc (legacy-peer-deps=true) so this
+     doesn't also break `ng add` schematics or CI's `npm ci` later. Logged as an open risk in .logs/risks.md
+     with a fallback plan (downgrade to Angular 21, or re-pin once NgRx catches up) — watch for it during
+     Batch 5/6 when real NgRx actions/effects get added.
+  3. Also fixed en route: `ng add @angular/material --animations=enabled` did not actually install
+     `@angular/animations` (Material 22 still needs it internally even though the app-level animation API is
+     being deprecated in favor of `animate.enter`/`animate.leave`) — installed it explicitly, build was
+     failing without it. Also corrected the devops doc's guessed Docker output path
+     (`dist/sana3-ma-frontend`) to the real one (`dist/frontend/browser` — new Angular builder nests static
+     output under `browser/`, and the project is named `frontend` not `sana3-ma-frontend`). Added
+     frontend/.dockerignore (missing project convention; excludes node_modules/dist so the Docker build
+     context doesn't transfer ~260MB every build).
+- Verified locally: `ng build` (bundles + lazy chunks all present), `ng test --watch=false` (7/7 passing,
+  6 test files, Vitest), `ng lint` (clean), and a real `docker build` of frontend/Dockerfile end-to-end
+  (confirmed the nginx image actually contains the built app at the right path) — test image removed after.
+- Committed locally as c825a51 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).
+
+Next session: resume at Batch 5 (frontend auth UI — login/register, NgRx auth slice actions/reducer/effects,
+JWT interceptor, route guards, tests). Watch the NgRx/Angular-22 peer-dep risk (.logs/risks.md) once real
+effects are added — if anything breaks at runtime, the fallback is documented there. See .logs/activity.md
+"PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.

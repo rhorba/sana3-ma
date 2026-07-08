@@ -14,7 +14,7 @@
 ```yaml
 stages:
   - lint            # checkstyle/spotless (backend), eslint (frontend)
-  - test            # JUnit+Testcontainers (backend), Karma (frontend); fail CI if coverage < 80%
+  - test            # JUnit+Testcontainers (backend), Vitest (frontend); fail CI if coverage < 80%
   - security-scan   # SAST (Semgrep), SCA (Trivy), secrets (Gitleaks)
   - build           # Docker images: backend, frontend
   - deploy-staging  # auto on PR merge to main
@@ -48,14 +48,17 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 # frontend/Dockerfile
 FROM node:22-alpine AS build
 WORKDIR /app
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm ci
 COPY . .
 RUN npm run build
 FROM nginx:alpine
-COPY --from=build /app/dist/sana3-ma-frontend /usr/share/nginx/html
+COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 EXPOSE 80
 ```
+Note: Angular project is named `frontend` (not `sana3-ma-frontend`), and the new Angular application builder
+nests static output under `dist/frontend/browser/`. `.npmrc` (legacy-peer-deps=true) must be copied into the
+build stage — see risks.md for why.
 `docker-compose.yml` wires: `postgres` (postgis/postgis image), `backend`, `frontend`, all reading from `.env`.
 
 ## 6. Monitoring Baseline

@@ -12,7 +12,7 @@
 ## 2. Test Pyramid Targets
 | Layer | Coverage Target | Tooling |
 |---|---|---|
-| Unit | ≥ 60% of business logic | JUnit 5 + Mockito (backend), Jasmine/Karma (frontend) |
+| Unit | ≥ 60% of business logic | JUnit 5 + Mockito (backend), Vitest (frontend, via Angular CLI default; Karma is deprecated upstream and no longer scaffolded by `ng new` as of Angular 22 — test syntax (describe/it/expect) unchanged) |
 | Integration | ≥ 40% of API + DB layer | Spring Boot Test + Testcontainers (Postgres) |
 | E2E | Critical happy paths only | Playwright (with video recording) |
 | **Combined gate** | **≥ 80%** — non-negotiable | CI blocks merge if below |

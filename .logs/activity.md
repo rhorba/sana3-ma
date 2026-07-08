@@ -21,6 +21,16 @@ B8 VERIFY: coverage (JaCoCo+Karma) >=80%, security scan (Semgrep/Trivy/Gitleaks)
 B9 CI: GitHub Actions workflow, push, monitor+fix until green
 B10 SHIP: Playwright E2E + video recording, final push, sprint retro, SESSION_END
 
+## PLAN 2026-07-08 — Batch 4 task breakdown (frontend scaffold)
+Task 4.1: ng new (latest Angular, standalone, SCSS, routing) in frontend/
+Task 4.2: ng add @angular/material, basic theme
+Task 4.3: NgRx store + devtools + effects, empty auth/artisan-profile feature slices (ADR-2)
+Task 4.4: routing skeleton — home/login/register/profile placeholders + not-found
+Task 4.5: smoke test for root component
+Task 4.6: frontend/Dockerfile (node:22-alpine build -> nginx:alpine), per docs/devops-sana3-ma.md
+Task 4.7: verify build/test/lint, commit, log
+Structural only — auth/profile UI logic deferred to Batch 5/6 per sprint plan.
+
 ## BATCH 1 DONE 2026-07-06 — Backend Maven skeleton
 Multi-module Maven (domain/application/adapter-persistence/adapter-web/bootstrap), Spring Boot 4.1.0 (Java 25), Flyway migrations V1 (users) + V2 (artisan_profiles, PostGIS), .env.example, docker-compose.yml (postgres+backend), backend/Dockerfile.
 Fixed during verification: Initializr's bootVersion label "4.1.0.RELEASE" doesn't exist on Central (real: 4.1.0); EntityScan moved to org.springframework.boot.persistence.autoconfigure in Boot 4; adapter-persistence was missing spring-boot-starter-flyway (had only the raw flyway-database-postgresql driver, so FlywayAutoConfiguration never activated) — fixed and re-verified end-to-end via docker compose (Flyway applied both migrations, actuator health UP). Host ports 5432/8080 were already taken locally, remapped to 5433/8081 via DB_HOST_PORT/BACKEND_HOST_PORT env vars (container-to-container traffic unaffected).

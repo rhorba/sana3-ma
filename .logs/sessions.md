@@ -107,3 +107,48 @@ Next session: resume at Batch 5 (frontend auth UI — login/register, NgRx auth 
 JWT interceptor, route guards, tests). Watch the NgRx/Angular-22 peer-dep risk (.logs/risks.md) once real
 effects are added — if anything breaks at runtime, the fallback is documented there. See .logs/activity.md
 "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.
+
+## SESSION_START 2026-07-08 (continued 2026-07-09)
+Resumed from previous SESSION_END (2026-07-08). Continuing Sprint 1 at Batch 5: frontend auth UI
+(login/register, NgRx auth slice, JWT interceptor, guards, tests).
+
+## SESSION_END 2026-07-09
+Done this session:
+- Fixed a Batch 4 gap first: docs/ui-sana3-ma.md specifies a custom terracotta/teal/Inter M3 theme, but
+  Batch 4 shipped the azure-blue prebuilt Material theme. Generated a real M3 palette from the brand hex
+  colors via `ng generate @angular/material:theme-color` and wired it into styles.scss + Inter via Google
+  Fonts. NgRx's Angular-22 peer-dep gap from Batch 4 (.logs/risks.md) held up fine through this — no runtime
+  issues yet.
+- Implemented the real auth NgRx slice (auth.actions/reducer/effects/selectors.ts), replacing Batch 4's
+  empty placeholder reducer: register/login/refreshToken/logout, matching the exact backend contract from
+  backend/adapter-web/.../auth/*.java (AuthResponse shape, ApiError envelope, 409/401/400 codes).
+- AuthService (HttpClient, withCredentials for the httpOnly refresh cookie), a functional JWT interceptor
+  (attaches access token from the store via selectSignal), an authGuard on /profile, and a
+  provideAppInitializer that dispatches a silent refreshToken on bootstrap so a page reload restores the
+  session instead of bouncing to /login (access token is intentionally memory-only per
+  docs/security-sana3-ma.md, so without this every reload would look logged-out).
+- Login/Register standalone components: reactive forms, Material fields, inline validation (required/email/
+  minlength 10) per Story 1.3's acceptance criteria, role radio group (BUYER/ARTISAN) on register, MatSnackBar
+  for auth errors, redirect-on-authenticated (honoring `returnUrl`). Added a logout control to the app shell
+  toolbar (not explicitly in Story 1.3, but the auth slice needed a way to actually use it).
+- Found a real gap via browser smoke-testing (not caught by unit tests): logout only cleared client-side
+  NgRx state — the backend had no logout endpoint, so the httpOnly refresh cookie stayed valid and a reload
+  silently logged the user back in; worse, the session was never actually revoked server-side. Surfaced this
+  to the user rather than silently shipping around it. User chose to add a minimal backend fix: `POST
+  /api/v1/auth/logout` (backend/adapter-web AuthController) that expires the refresh cookie — stateless JWT
+  (ADR-3) has no server-side session store to revoke beyond that, which is an accepted limitation, not a bug.
+  Added AuthControllerTest coverage for it and a frontend logout$ effect (non-dispatching) that calls it.
+- Tests: 30 frontend (reducer, effects incl. logout$, guard, interceptor, Login/Register components, app
+  shell) all green, plus 2 new backend AuthControllerTest cases. `ng build`/`ng test`/`ng lint` all clean.
+- Real end-to-end smoke test against a live backend + browser (not just unit tests): register → auto-login →
+  redirect to /profile, inline validation errors rendering correctly, terracotta/teal theme rendering
+  correctly, hard-reload-restores-session via the refresh cookie, logout → reload now correctly requires
+  login again (post-fix), login → returnUrl redirect. Used a local port override (4201 + matching
+  CORS_ALLOWED_ORIGINS) since 4200 was occupied by an unrelated process on this machine; reverted .env back
+  to the documented default (4200) afterward. Docker containers and dev server stopped after testing.
+- Committed locally as 6c9cc21 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).
+
+Next session: resume at Batch 6 (frontend profile UI — view/edit, NgRx profile slice, tests). The
+artisan-profile NgRx slice is still the empty placeholder from Batch 4 (store/artisan-profile/*.ts) — same
+pattern as this batch's auth slice work applies there. See .logs/activity.md "PLAN 2026-07-05 — Sprint 1
+batches" for the full B1-B10 breakdown, and docs/stories-sana3-ma.md Epic 2 for acceptance criteria.

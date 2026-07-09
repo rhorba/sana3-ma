@@ -98,3 +98,49 @@ PUT update same id with new updatedAt -> 200, PUT as buyer -> 403 NOT_AN_ARTISAN
 VALIDATION_FAILED) — all as expected. Full backend test suite (46 tests) green via `mvnw -o test`. Coverage % measurement still deferred to
 Batch 8 (dedicated VERIFY batch) per sprint plan.
 Not pushed yet — push happens at sprint SHIP (Batch 10) per rule 7, or sooner if requested.
+
+## BATCH 4 DONE 2026-07-08 — Frontend scaffold
+Angular 22 standalone app (frontend/), Angular Material (azure-blue theme — corrected to brand theme in
+Batch 5), NgRx store/effects/devtools wired with empty auth/artisanProfile feature slices per ADR-2,
+lazy-loaded routing skeleton (home/login/register/profile placeholders + not-found), ESLint, multi-stage
+Dockerfile (node:22-alpine build -> nginx:alpine serve). Deviations from foundation docs (both logged,
+both resolved with the user): Karma -> Vitest (Karma deprecated upstream, no longer scaffolded by `ng new`;
+docs/test-strategy-sana3-ma.md and docs/devops-sana3-ma.md updated), and NgRx 21.1.1 installed against
+Angular 22 via --legacy-peer-deps since NgRx has not yet shipped Angular-22 support (tracked as an open
+risk in .logs/risks.md, frontend/.npmrc pins legacy-peer-deps so `ng add`/CI `npm ci` don't also break).
+Verified: `ng build`/`ng test` (7/7)/`ng lint` clean, and a real `docker build` of frontend/Dockerfile
+end-to-end (confirmed the nginx image serves the built app from the correct path).
+Committed locally as c825a51 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).
+
+## BATCH 5 DONE 2026-07-09 — Frontend auth UI
+Fixed the Batch 4 theme gap first: generated a real M3 palette from docs/ui-sana3-ma.md's brand colors
+(terracotta #B5651D / teal #2E7D6B) via `ng generate @angular/material:theme-color`, replacing the
+azure-blue placeholder; wired Inter via Google Fonts.
+Real auth NgRx slice (auth.actions/reducer/effects/selectors.ts) replacing Batch 4's empty placeholder:
+register/login/refreshToken/logout matching the exact backend contract (AuthResponse shape, ApiError
+envelope, 409/401/400 codes) read directly from backend/adapter-web/.../auth/*.java. AuthService
+(HttpClient, withCredentials for the httpOnly refresh cookie), functional JWT interceptor (attaches access
+token from the store via selectSignal), authGuard on /profile, and a provideAppInitializer that dispatches
+a silent refreshToken on bootstrap so a page reload restores the session instead of bouncing to /login
+(access token is intentionally memory-only per docs/security-sana3-ma.md).
+Login/Register standalone components: reactive forms, Material fields, inline validation
+(required/email/minlength 10) per Story 1.3 AC, role radio group on register, MatSnackBar for auth errors,
+redirect-on-authenticated honoring `returnUrl`. Added a logout control to the app shell toolbar (beyond
+Story 1.3's explicit scope, but needed for the auth slice to be usable end-to-end).
+Found via browser smoke-testing (not caught by unit tests): logout only cleared client-side state — no
+backend logout endpoint existed, so the httpOnly refresh cookie stayed valid and a reload silently
+restored the "logged out" session, and the session was never actually revoked server-side. Surfaced to the
+user; user chose to add a minimal backend fix rather than ship client-only or drop the feature: `POST
+/api/v1/auth/logout` (backend/adapter-web AuthController) expires the refresh cookie — stateless JWT
+(ADR-3) has no server-side session store to revoke beyond that (accepted limitation, documented in the
+controller). Added AuthControllerTest coverage and a frontend logout$ effect (non-dispatching).
+Tests: 30 frontend (reducer, effects incl. logout$, guard, interceptor, Login/Register, app shell) green,
+2 new backend AuthControllerTest cases green (full backend suite still green). `ng build`/`ng test`/
+`ng lint` all clean.
+VERIFY: real end-to-end browser smoke test against a live docker-compose backend (not just unit tests) —
+register -> auto-login -> redirect, inline validation errors, theme rendering correctly, hard-reload
+restores session via the cookie, logout -> reload now correctly requires login again (post-fix),
+login -> returnUrl redirect. Local port override (4201) used since 4200 was occupied by an unrelated
+process on this machine; .env reverted to the documented default (4200) afterward, docker/dev-server
+stopped after testing.
+Committed locally as 6c9cc21 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).

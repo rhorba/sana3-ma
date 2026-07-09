@@ -31,6 +31,20 @@ Task 4.6: frontend/Dockerfile (node:22-alpine build -> nginx:alpine), per docs/d
 Task 4.7: verify build/test/lint, commit, log
 Structural only — auth/profile UI logic deferred to Batch 5/6 per sprint plan.
 
+## PLAN 2026-07-08 — Batch 5 task breakdown (frontend auth UI)
+Task 5.0: fix Batch 4 gap — custom M3 Material theme from docs/ui-sana3-ma.md tokens (terracotta/teal/Inter),
+  replacing the azure-blue prebuilt theme (doc explicitly deferred this to EXECUTE; missed in Batch 4).
+Task 5.1: AuthService (HttpClient, withCredentials) — register/login/refresh against backend contract
+  (POST /api/v1/auth/{register,login,refresh}, ApiError envelope, AuthResponse shape) confirmed from
+  backend/adapter-web/src/main/java/ma/sana3/adapter/web/auth/*.java
+Task 5.2: auth NgRx actions/reducer/effects/selectors (register/login/refresh/logout), replacing empty
+  placeholder reducer from Batch 4
+Task 5.3: JWT interceptor (attaches access token from store to outgoing requests) + provideHttpClient wiring
+Task 5.4: auth route guard on /profile + silent-refresh-on-bootstrap (access token is memory-only per
+  docs/security-sana3-ma.md — without a bootstrap refresh attempt, every page reload looks logged-out)
+Task 5.5: Login/Register reactive form components (Material fields, inline validation per Story 1.3 AC)
+Task 5.6: unit tests (reducer, effects, guard, interceptor, components), verify build/test/lint, commit, log
+
 ## BATCH 1 DONE 2026-07-06 — Backend Maven skeleton
 Multi-module Maven (domain/application/adapter-persistence/adapter-web/bootstrap), Spring Boot 4.1.0 (Java 25), Flyway migrations V1 (users) + V2 (artisan_profiles, PostGIS), .env.example, docker-compose.yml (postgres+backend), backend/Dockerfile.
 Fixed during verification: Initializr's bootVersion label "4.1.0.RELEASE" doesn't exist on Central (real: 4.1.0); EntityScan moved to org.springframework.boot.persistence.autoconfigure in Boot 4; adapter-persistence was missing spring-boot-starter-flyway (had only the raw flyway-database-postgresql driver, so FlywayAutoConfiguration never activated) — fixed and re-verified end-to-end via docker compose (Flyway applied both migrations, actuator health UP). Host ports 5432/8080 were already taken locally, remapped to 5433/8081 via DB_HOST_PORT/BACKEND_HOST_PORT env vars (container-to-container traffic unaffected).

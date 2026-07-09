@@ -1,2 +1,49 @@
-<h1>Register</h1>
-<p>Registration form — placeholder page. Implemented in Batch 5.</p>
+<div class="auth-card">
+  <h1>Register</h1>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" autocomplete="email" />
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <mat-error>
+          @if (form.controls.email.hasError('required')) {
+            Email is required.
+          } @else if (form.controls.email.hasError('email')) {
+            Enter a valid email address.
+          }
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" formControlName="password" autocomplete="new-password" />
+      @if (form.controls.password.invalid && form.controls.password.touched) {
+        <mat-error>
+          @if (form.controls.password.hasError('required')) {
+            Password is required.
+          } @else if (form.controls.password.hasError('minlength')) {
+            Password must be at least 10 characters.
+          }
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <span id="role-label">I am a</span>
+    <mat-radio-group formControlName="role" aria-labelledby="role-label">
+      <mat-radio-button value="BUYER">Buyer</mat-radio-button>
+      <mat-radio-button value="ARTISAN">Artisan</mat-radio-button>
+    </mat-radio-group>
+
+    <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+      @if (loading()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        Register
+      }
+    </button>
+  </form>
+
+  <p>Already have an account? <a routerLink="/login">Log In</a></p>
+</div>

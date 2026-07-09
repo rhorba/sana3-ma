@@ -63,6 +63,23 @@ class AuthController {
         return withRefreshCookie(result, HttpStatus.OK);
     }
 
+    // Stateless JWT: there is no server-side session/token store to revoke, so this only expires the
+    // httpOnly refresh cookie. A refresh token already extracted from the cookie by other means would
+    // still be valid until its natural TTL — accepted limitation of the stateless design (ADR-3).
+    @PostMapping("/logout")
+    ResponseEntity<Void> logout() {
+        ResponseCookie expiredCookie = ResponseCookie.from(REFRESH_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/api/v1/auth")
+                .maxAge(Duration.ZERO)
+                .build();
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+                .build();
+    }
+
     private ResponseEntity<AuthResponse> withRefreshCookie(AuthResult result, HttpStatus status) {
         ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE_NAME, result.refreshToken())
                 .httpOnly(true)

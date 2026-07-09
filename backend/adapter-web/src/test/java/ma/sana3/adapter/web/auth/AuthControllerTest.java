@@ -137,4 +137,19 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.accessToken").value("access-token"))
                 .andExpect(cookie().value("refresh_token", "refresh-token"));
     }
+
+    @Test
+    void logoutExpiresTheRefreshCookie() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(new jakarta.servlet.http.Cookie("refresh_token", "some-refresh-token")))
+                .andExpect(status().isNoContent())
+                .andExpect(cookie().maxAge("refresh_token", 0))
+                .andExpect(cookie().httpOnly("refresh_token", true));
+    }
+
+    @Test
+    void logoutWithoutAnExistingCookieStillSucceeds() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isNoContent());
+    }
 }

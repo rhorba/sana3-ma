@@ -152,3 +152,43 @@ Next session: resume at Batch 6 (frontend profile UI — view/edit, NgRx profile
 artisan-profile NgRx slice is still the empty placeholder from Batch 4 (store/artisan-profile/*.ts) — same
 pattern as this batch's auth slice work applies there. See .logs/activity.md "PLAN 2026-07-05 — Sprint 1
 batches" for the full B1-B10 breakdown, and docs/stories-sana3-ma.md Epic 2 for acceptance criteria.
+
+## SESSION_END 2026-07-09 (continued, Batch 6)
+Done this session (same continuous session as above, user said "continue"):
+- Before starting Batch 6, re-read docs/ux-sana3-ma.md closely (document-first) and found two real gaps
+  in what Batch 5 shipped: the site map explicitly scopes /profile to ARTISAN only, and Flow 1 specifies a
+  role-based post-auth redirect (buyer -> Home, artisan -> Profile) — Batch 5 had unconditionally redirected
+  everyone to /profile and the guard only checked "logged in", not role. Fixed both: renamed authGuard ->
+  artisanGuard (now checks role, redirects non-artisans home instead of letting them hit a 403 on save),
+  and login/register success redirects based on role. Also hid the toolbar's Profile link for non-artisans
+  (a buyer could otherwise click a dead-end link).
+- Implemented the real artisan-profile NgRx slice (actions/reducer/effects/selectors), replacing Batch 4's
+  empty placeholder: load/save against GET/PUT /api/v1/artisan-profiles/me, matching the exact backend
+  contract from Batch 3 (ArtisanProfileResponse, 404 treated as a normal empty state per Story 2.3 — not an
+  error — 403 NOT_AN_ARTISAN, 400 VALIDATION_FAILED). ArtisanProfileService (HttpClient; no withCredentials
+  needed here since protected endpoints use the JWT interceptor's Authorization header, not the auth cookie).
+- Profile component: single combined view/edit reactive form matching docs/ux-sana3-ma.md's wireframe
+  exactly (display name, craft type, region, bio, phone) — pre-filled when a profile exists, a "Complete
+  your profile" prompt when it doesn't (empty state), a loading message while fetching, "Profile updated"
+  toast on save (exact phrase from the UX doc's screen-states table).
+- Extracted a shared extractErrorMessage/ApiError util (core/http-error.util.ts, core/api-error.model.ts)
+  out of auth.effects.ts so artisan-profile.effects.ts didn't duplicate it — a real simplification found
+  while writing the second effects file, not planned upfront.
+- Tests: 54 frontend (added profile reducer/effects/component tests, guard role-based cases, login/register
+  redirect cases) all green. `ng build`/`ng test`/`ng lint` clean (one transient `ng build` failure fetching
+  Google Fonts over the network mid-session — unrelated to code, retry succeeded; noted in .logs/risks.md as
+  a Batch 9 CI consideration, not a bug).
+- Real end-to-end browser smoke test against a live backend (not just unit tests): logged in as the
+  existing artisan account (session survived from Batch 5's testing) and got auto-redirected register ->
+  /profile with the empty-state prompt showing correctly; filled and saved the form, got the "Profile
+  updated" toast, reloaded and confirmed the data persisted via GET; registered a fresh buyer account and
+  confirmed it lands on Home instead of /profile, and that navigating to /profile directly bounces back
+  to Home (artisanGuard blocking a non-artisan). Same local port workaround as Batch 5 (4201 + matching
+  CORS_ALLOWED_ORIGINS), reverted .env afterward, docker/dev-server stopped after testing.
+- Committed locally as c3cbea7 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).
+
+Next session: resume at Batch 7 (docker-compose full wiring + local end-to-end smoke test). This is where
+the frontend service actually gets added to docker-compose.yml (it's only ever been run via `ng serve` so
+far) and where API_BASE_URL needs to become environment-configurable instead of the hardcoded
+localhost:8081 dev default in frontend/src/app/core/api.config.ts (flagged as a known placeholder back in
+Batch 5). See .logs/activity.md "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.

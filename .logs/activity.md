@@ -156,3 +156,28 @@ login -> returnUrl redirect. Local port override (4201) used since 4200 was occu
 process on this machine; .env reverted to the documented default (4200) afterward, docker/dev-server
 stopped after testing.
 Committed locally as 6c9cc21 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).
+
+## BATCH 6 DONE 2026-07-09 — Frontend artisan profile UI
+Fixed two Batch 5 gaps first, found re-reading docs/ux-sana3-ma.md: /profile is ARTISAN only (site map),
+and post-auth redirect is role-based (buyer->Home, artisan->Profile), not unconditional ->/profile.
+authGuard renamed artisanGuard (checks role, non-artisans -> home instead of a 403-on-save form);
+login/register redirects fixed; toolbar hides the Profile link for non-artisans.
+Real artisan-profile NgRx slice (actions/reducer/effects/selectors) replacing Batch 4's empty placeholder:
+load/save against GET/PUT /api/v1/artisan-profiles/me matching the exact Batch 3 backend contract
+(ArtisanProfileResponse, 404 = normal empty state per Story 2.3 not an error, 403 NOT_AN_ARTISAN, 400
+VALIDATION_FAILED). ArtisanProfileService (HttpClient; JWT interceptor handles auth, no withCredentials
+needed unlike the auth endpoints). Profile component: single combined view/edit form matching
+docs/ux-sana3-ma.md's wireframe exactly (display name, craft type, region, bio, phone) — pre-filled when a
+profile exists, "Complete your profile" prompt when it doesn't, loading state, "Profile updated" toast on
+save (exact UX-doc phrase). Extracted shared extractErrorMessage/ApiError util (core/http-error.util.ts,
+core/api-error.model.ts) out of auth.effects.ts to avoid duplicating it in artisan-profile.effects.ts.
+Tests: 54 frontend (added profile reducer/effects/component, guard role cases, redirect cases) green.
+`ng build`/`ng test`/`ng lint` clean (one transient `ng build` network failure fetching Google Fonts,
+unrelated to code — noted in .logs/risks.md as a Batch 9 CI consideration).
+VERIFY: real end-to-end browser smoke test against a live docker-compose backend — artisan session
+auto-redirected to /profile showing the empty-state prompt correctly, filled+saved the form, got the
+success toast, reload confirmed the data persisted via GET; fresh buyer registration landed on Home, and
+navigating to /profile directly bounced back to Home (artisanGuard blocking a non-artisan). Same local
+port workaround as Batch 5 (4201 + matching CORS_ALLOWED_ORIGINS), .env reverted afterward, docker/dev
+server stopped after testing.
+Committed locally as c3cbea7 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).

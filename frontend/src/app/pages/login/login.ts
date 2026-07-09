@@ -9,7 +9,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 
 import { AuthActions } from '../../store/auth/auth.actions';
-import { selectAuthError, selectAuthLoading, selectIsAuthenticated } from '../../store/auth/auth.selectors';
+import { selectAuthError, selectAuthLoading, selectIsAuthenticated, selectRole } from '../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-login',
@@ -34,6 +34,7 @@ export class Login {
   protected readonly loading = this.store.selectSignal(selectAuthLoading);
   protected readonly error = this.store.selectSignal(selectAuthError);
   private readonly isAuthenticated = this.store.selectSignal(selectIsAuthenticated);
+  private readonly role = this.store.selectSignal(selectRole);
 
   readonly form = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -43,8 +44,10 @@ export class Login {
   constructor() {
     effect(() => {
       if (this.isAuthenticated()) {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/profile';
-        this.router.navigateByUrl(returnUrl);
+        // docs/ux-sana3-ma.md Flow 1: buyer -> Home, artisan -> Profile. An explicit returnUrl
+        // (set by artisanGuard redirecting an unauthenticated visit) takes priority over that default.
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.router.navigateByUrl(returnUrl ?? (this.role() === 'ARTISAN' ? '/profile' : '/'));
       }
     });
 

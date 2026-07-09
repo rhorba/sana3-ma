@@ -1,19 +1,10 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, EMPTY, map, of, switchMap } from 'rxjs';
 
-import { ApiError } from '../../core/auth/auth.models';
+import { extractErrorMessage } from '../../core/http-error.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { AuthActions } from './auth.actions';
-
-function extractErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof HttpErrorResponse) {
-    const body = error.error as ApiError | undefined;
-    return body?.error?.message ?? fallback;
-  }
-  return fallback;
-}
 
 @Injectable()
 export class AuthEffects {

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard } from './core/auth/auth.guard';
+import { artisanGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -18,7 +18,7 @@ export const routes: Routes = [
   {
     path: 'profile',
     loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile),
-    canActivate: [authGuard],
+    canActivate: [artisanGuard],
   },
   {
     path: '**',

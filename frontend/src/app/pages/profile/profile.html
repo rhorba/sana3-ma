@@ -1,2 +1,52 @@
-<h1>Artisan Profile</h1>
-<p>Profile view/edit — placeholder page. Implemented in Batch 6.</p>
+<div class="auth-card">
+  <h1>My Profile</h1>
+
+  @if (loading()) {
+    <p>Loading your profile…</p>
+  } @else {
+    @if (loaded() && !hasProfile()) {
+      <p class="empty-state-prompt">Complete your profile so buyers can find you.</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Display name</mat-label>
+        <input matInput formControlName="displayName" />
+        @if (form.controls.displayName.invalid && form.controls.displayName.touched) {
+          <mat-error>Display name is required.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Craft type</mat-label>
+        <input matInput formControlName="craftType" />
+        @if (form.controls.craftType.invalid && form.controls.craftType.touched) {
+          <mat-error>Craft type is required.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Region</mat-label>
+        <input matInput formControlName="region" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Bio</mat-label>
+        <textarea matInput formControlName="bio" rows="4"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Phone</mat-label>
+        <input matInput formControlName="contactPhone" />
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+        @if (saving()) {
+          <mat-spinner diameter="20" />
+        } @else {
+          Save
+        }
+      </button>
+    </form>
+  }
+</div>

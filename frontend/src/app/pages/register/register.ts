@@ -11,7 +11,7 @@ import { Store } from '@ngrx/store';
 
 import { RegistrableRole } from '../../core/auth/auth.models';
 import { AuthActions } from '../../store/auth/auth.actions';
-import { selectAuthError, selectAuthLoading, selectIsAuthenticated } from '../../store/auth/auth.selectors';
+import { selectAuthError, selectAuthLoading, selectIsAuthenticated, selectRole } from '../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-register',
@@ -36,6 +36,7 @@ export class Register {
   protected readonly loading = this.store.selectSignal(selectAuthLoading);
   protected readonly error = this.store.selectSignal(selectAuthError);
   private readonly isAuthenticated = this.store.selectSignal(selectIsAuthenticated);
+  private readonly role = this.store.selectSignal(selectRole);
 
   readonly form = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -46,7 +47,8 @@ export class Register {
   constructor() {
     effect(() => {
       if (this.isAuthenticated()) {
-        this.router.navigateByUrl('/profile');
+        // docs/ux-sana3-ma.md Flow 1: buyer -> Home, artisan -> Profile.
+        this.router.navigateByUrl(this.role() === 'ARTISAN' ? '/profile' : '/');
       }
     });
 

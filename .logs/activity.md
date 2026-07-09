@@ -45,6 +45,18 @@ Task 5.4: auth route guard on /profile + silent-refresh-on-bootstrap (access tok
 Task 5.5: Login/Register reactive form components (Material fields, inline validation per Story 1.3 AC)
 Task 5.6: unit tests (reducer, effects, guard, interceptor, components), verify build/test/lint, commit, log
 
+## PLAN 2026-07-09 — Batch 6 task breakdown (frontend profile UI)
+Task 6.0: fix Batch 5 gaps found re-reading docs/ux-sana3-ma.md — authGuard becomes artisan-only (site map:
+  "/profile (ARTISAN only)"); login/register success redirect becomes role-based (buyer->/, artisan->/profile)
+  instead of unconditional ->/profile (Flow 1: "Redirect: Buyer->Home stub / Artisan->Profile edit").
+Task 6.1: ArtisanProfileService (HttpClient) — GET/PUT /api/v1/artisan-profiles/me, matching backend contract
+  from backend/adapter-web/.../artisanprofile/*.java (ArtisanProfileResponse, 404 PROFILE_NOT_FOUND, 403
+  NOT_AN_ARTISAN, 400 VALIDATION_FAILED)
+Task 6.2: artisan-profile NgRx actions/reducer/effects/selectors (load/save), replacing empty placeholder
+Task 6.3: Profile component — combined view/edit reactive form per docs/ux-sana3-ma.md wireframe (display
+  name, craft type, region, bio, phone), empty-state prompt, skeleton loading, save toast
+Task 6.4: unit tests (reducer, effects, component), verify build/test/lint, commit, log
+
 ## BATCH 1 DONE 2026-07-06 — Backend Maven skeleton
 Multi-module Maven (domain/application/adapter-persistence/adapter-web/bootstrap), Spring Boot 4.1.0 (Java 25), Flyway migrations V1 (users) + V2 (artisan_profiles, PostGIS), .env.example, docker-compose.yml (postgres+backend), backend/Dockerfile.
 Fixed during verification: Initializr's bootVersion label "4.1.0.RELEASE" doesn't exist on Central (real: 4.1.0); EntityScan moved to org.springframework.boot.persistence.autoconfigure in Boot 4; adapter-persistence was missing spring-boot-starter-flyway (had only the raw flyway-database-postgresql driver, so FlywayAutoConfiguration never activated) — fixed and re-verified end-to-end via docker compose (Flyway applied both migrations, actuator health UP). Host ports 5432/8080 were already taken locally, remapped to 5433/8081 via DB_HOST_PORT/BACKEND_HOST_PORT env vars (container-to-container traffic unaffected).

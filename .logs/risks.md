@@ -21,3 +21,9 @@ limitation of the architecture, not a regression, but worth remembering if a fut
 compliance requirement calls for real revocation (would need a server-side denylist or a move to opaque
 session tokens — out of scope for Sprint 1).
 
+## NOTE 2026-07-09 — `ng build` needs internet access to inline Google Fonts
+`ng build` (production) fetches and inlines the Inter font CSS from fonts.googleapis.com at build time
+(hit a transient DNS failure once during Batch 6, unrelated to any code change — retry succeeded). Not a
+bug, but the GitHub Actions runner (Batch 9) will need outbound internet access during the build step, or
+this will need self-hosting the font file instead.
+

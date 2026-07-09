@@ -1,11 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { Store } from '@ngrx/store';
 
 import { AuthActions } from './store/auth/auth.actions';
-import { selectIsAuthenticated } from './store/auth/auth.selectors';
+import { selectIsAuthenticated, selectRole } from './store/auth/auth.selectors';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +19,8 @@ export class App {
 
   protected readonly title = signal('Sana3.ma');
   protected readonly isAuthenticated = this.store.selectSignal(selectIsAuthenticated);
+  private readonly role = this.store.selectSignal(selectRole);
+  protected readonly isArtisan = computed(() => this.role() === 'ARTISAN');
 
   logout(): void {
     this.store.dispatch(AuthActions.logout());

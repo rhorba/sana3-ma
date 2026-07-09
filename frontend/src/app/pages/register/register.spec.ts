@@ -1,11 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 
 import { AuthActions } from '../../store/auth/auth.actions';
-import { selectAuthError, selectAuthLoading, selectIsAuthenticated } from '../../store/auth/auth.selectors';
+import { selectAuthError, selectAuthLoading, selectIsAuthenticated, selectRole } from '../../store/auth/auth.selectors';
 import { Register } from './register';
 
 describe('Register', () => {
@@ -25,6 +25,7 @@ describe('Register', () => {
             { selector: selectAuthLoading, value: false },
             { selector: selectAuthError, value: null },
             { selector: selectIsAuthenticated, value: false },
+            { selector: selectRole, value: null },
           ],
         }),
       ],
@@ -63,5 +64,29 @@ describe('Register', () => {
     expect(dispatchSpy).toHaveBeenCalledWith(
       AuthActions.register({ email: 'a@b.com', password: 'password123', role: 'ARTISAN' }),
     );
+  });
+
+  it('redirects a buyer to / once authenticated', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
+
+    store.overrideSelector(selectIsAuthenticated, true);
+    store.overrideSelector(selectRole, 'BUYER');
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(navigateSpy).toHaveBeenCalledWith('/');
+  });
+
+  it('redirects an artisan to /profile once authenticated', () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigateByUrl');
+
+    store.overrideSelector(selectIsAuthenticated, true);
+    store.overrideSelector(selectRole, 'ARTISAN');
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(navigateSpy).toHaveBeenCalledWith('/profile');
   });
 });

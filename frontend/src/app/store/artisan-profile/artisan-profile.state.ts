@@ -7,6 +7,8 @@ export interface ArtisanProfileState {
   bio: string | null;
   contactPhone: string | null;
   loading: boolean;
+  loaded: boolean;
+  saving: boolean;
   error: string | null;
 }
 
@@ -19,5 +21,7 @@ export const initialArtisanProfileState: ArtisanProfileState = {
   bio: null,
   contactPhone: null,
   loading: false,
+  loaded: false,
+  saving: false,
   error: null,
 };

@@ -11,6 +11,10 @@ UPDATE 2026-07-09 (Batch 5): real auth NgRx slice (actions/reducer/effects/selec
 exercised end-to-end (unit tests + live browser smoke test against a real backend) with no runtime issues.
 Still worth re-checking during Batch 6 (profile slice) and Batch 9 (CI `npm ci`), but no longer a live
 blocker — downgrading this from an active concern to routine monitoring.
+CLOSED 2026-07-10 (Batch 9): CI's `npm ci` (fresh install, no local cache/node_modules carried over) ran
+clean with the committed .npmrc — the --legacy-peer-deps workaround holds up in a clean environment, not
+just this dev machine. No longer worth tracking as a risk; revisit only if NgRx ships real Angular 22
+support and the pin is worth removing for its own sake (cosmetic, not urgent).
 
 ## RISK 2026-07-09 — Stateless JWT has no server-side session revocation beyond cookie expiry (accepted)
 Batch 5 added `POST /api/v1/auth/logout` to expire the httpOnly refresh cookie, closing the gap where
@@ -33,4 +37,6 @@ already allocated", check `docker ps` across all projects before assuming this p
 (hit a transient DNS failure once during Batch 6, unrelated to any code change — retry succeeded). Not a
 bug, but the GitHub Actions runner (Batch 9) will need outbound internet access during the build step, or
 this will need self-hosting the font file instead.
+CLOSED 2026-07-10 (Batch 9): GitHub Actions' hosted runners have outbound internet by default — both CI
+runs' `ng build` steps succeeded without incident. No action needed.
 

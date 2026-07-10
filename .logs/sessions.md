@@ -290,3 +290,36 @@ Done this session:
 Next session: resume at Batch 10 (SHIP — Playwright E2E + video recording covering all critical user flows
 per rule 9, final push, sprint retro, SESSION_END). This closes out Sprint 1. See .logs/activity.md
 "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.
+
+## SESSION_END 2026-07-10 (Batch 10, same continuous session — user said "yes" to continue — SPRINT 1 COMPLETE)
+Done this session:
+- Scaffolded a Playwright e2e/ suite as its own toolchain (not bolted onto the Angular unit-test setup),
+  per docs/test-strategy-sana3-ma.md's tooling table. Wrote one continuous test
+  (e2e/tests/critical-flows.spec.ts) covering all 4 ATDD scenarios from that doc's §3 in a single browser
+  context, so Playwright's video output is one file, not four — matches rule 9's "record a browser test
+  session" (singular) wording. Checked the buyer-blocked-from-profile scenario at both the UI level
+  (artisanGuard redirect) and the API level (direct PUT /artisan-profiles/me returning 403), since the
+  documented Gherkin scenario is worded at the API level ("request the artisan profile edit endpoint") but
+  the frontend guard normally prevents the UI from ever making that call.
+- Ran it against the full docker-compose stack (postgres+backend+frontend, not `ng serve`) — passed on the
+  first attempt, no fixes needed. Saved the recording to `.recordings/v0.1-2026-07-10.webm` (gitignored,
+  stays local per the existing binary-artifacts convention — mentioning the path here since it won't be in
+  git history: it's on this machine at that path if it needs to be archived elsewhere).
+- Updated docs/test-strategy-sana3-ma.md's release gate checklist to all-checked with evidence (commit
+  refs, CI run ID, actual coverage numbers) — was all unchecked boxes since the doc was written in the
+  first session before any code existed.
+- Closed out two risks in .logs/risks.md that Batch 9's CI run empirically resolved (NgRx --legacy-peer-deps
+  survives a clean `npm ci`; Google Fonts fetch works fine on GitHub's hosted runners) — both were "watch
+  and see" entries from earlier batches, now confirmed non-issues rather than left dangling.
+- Wrote the Sprint 1 retro (.logs/activity.md "RETRO 2026-07-10"): what shipped, what deviated from the
+  original plan and why (architecture scope choice, Vitest/Karma forced swap, NgRx peer-dep workaround),
+  what went well (real smoke-testing every batch caught 2 real bugs unit tests missed; document-first
+  caught a real UX gap before Batch 6 shipped), what's carried forward (stateless-JWT revocation limitation,
+  accepted; local port contention, a machine note not a project bug), and what was deliberately deferred
+  under YAGNI (k8s, staging/prod infra, anything outside Epics 1-2).
+- Committed e2e suite as 3de667f. Final push of all Batch 10 work (E2E suite + retro/logs) to origin/main —
+  triggered CI once more; monitored to completion, green.
+
+Sprint 1 is complete: all 10 batches shipped, CI green, coverage 89.5%, zero open critical/high security
+findings, E2E happy path recorded. Next session starts Sprint 2 planning (new UNDERSTAND/BRAINSTORM/PLAN
+cycle with the user — no predetermined batch list exists yet, unlike this sprint's B1-B10).

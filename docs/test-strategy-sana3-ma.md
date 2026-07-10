@@ -51,11 +51,12 @@ Feature: Artisan Profile
 - [ ] Business logic: role escalation attempt via registration payload (role field tampering to "ADMIN")
 
 ## 5. Release Gate Criteria
-- [ ] All acceptance scenarios pass
-- [ ] Combined unit + integration coverage ≥ 80%
-- [ ] No critical/high security findings open (Semgrep/Trivy/Gitleaks clean)
-- [ ] E2E happy path passes and is recorded (`.recordings/v0.1-2026-07-11.webm`) at sprint-1 version completion
-- [ ] CI green on the branch before SHIP
+- [x] All acceptance scenarios pass (Playwright, e2e/tests/critical-flows.spec.ts, 2026-07-10)
+- [x] Combined unit + integration coverage ≥ 80% (89.5% at Batch 8, re-confirmed by CI at Batch 9)
+- [x] No critical/high security findings open (Semgrep/Trivy/Gitleaks clean — see .logs/metrics.md Batch 8)
+- [x] E2E happy path passes and is recorded (`.recordings/v0.1-2026-07-10.webm`, actual date — original
+      placeholder date of 07-11 in this doc was a Batch-1-session guess before the real sprint timeline)
+- [x] CI green on the branch before SHIP (run 29083741944, all 5 jobs, first try)
 
 ### Test Strategy Validation Checklist
 - [x] Every story maps to at least one acceptance scenario

@@ -230,3 +230,53 @@ profile-UI, docker-compose wiring, coverage+security verify, CI pipeline).
 CI run 29083741944 triggered automatically: **all 5 jobs green on the first run** (Lint 32s, Test+Coverage
 Gate 1m23s, Security Scan 58s, Build Docker Images 1m54s, Deploy to Staging 2s — ~4min total). No red-CI
 diagnose/fix cycle was needed (rule 11 monitoring requirement satisfied trivially).
+
+## BATCH 10 2026-07-10 — SHIP
+Added a Playwright e2e/ suite (separate toolchain from the Angular unit tests, per
+docs/test-strategy-sana3-ma.md's tooling table) with one continuous test covering all 4 documented ATDD
+scenarios in a single browser context, producing a single video per rule 9. Ran it against the full
+docker-compose stack (not `ng serve`) — passed on the first attempt. Saved to
+`.recordings/v0.1-2026-07-10.webm` (gitignored, stays local — see risks.md pattern already established for
+binaries). Updated docs/test-strategy-sana3-ma.md's release gate checklist to all-checked with evidence
+links.
+
+## RETRO 2026-07-10 — Sprint 1 (Batches 1-10)
+**Delivered**: full auth (register/login/refresh/logout) + artisan profile CRUD, backend (hexagonal Maven
+multi-module, Spring Boot 4.1/Java 25) and frontend (Angular 22 standalone + NgRx), fully wired through
+docker-compose, ≥80% combined coverage, clean security scan, green CI, and a recorded E2E happy-path video.
+Sprint scope (docs/stories-sana3-ma.md Epics 1-2) shipped in full — nothing cut.
+
+**What deviated from the plan, and why** (all previously logged in .logs/decisions.md/risks.md, collected
+here for a single retro view):
+- Architecture chosen COMPREHENSIVE (hexagonal + CQRS-lite backend, full NgRx frontend) over the
+  YAGNI-recommended Simple, per explicit user request anticipating future multi-team growth — heavier than
+  strictly required for auth+profile CRUD, worth re-evaluating if that growth doesn't materialize by Sprint 3.
+- Vitest replaced Karma for frontend unit tests (Angular 22 dropped Karma scaffolding upstream) — a tooling
+  substitution forced by the framework, not a scope change; test syntax unaffected.
+- NgRx 21.1.1 installed against Angular 22 via --legacy-peer-deps (NgRx hadn't shipped Angular-22 support
+  yet at scaffold time) — flagged as a risk in Batch 4, monitored through Batches 5-9, closed clean at
+  Batch 9 once CI's fresh `npm ci` proved it wasn't just a local-cache artifact.
+- Two real bugs were found by *running* things rather than by unit tests, and fixed same-session rather
+  than deferred: no server-side logout endpoint (Batch 5 — cookie stayed valid after "logout"), and nginx
+  missing a SPA fallback (Batch 7 — direct navigation/hard-reload 404'd). Both only surfaced because every
+  batch ended with a real browser or docker-compose smoke test instead of stopping at green unit tests —
+  worth keeping as a standing practice, not just a Sprint 1 habit.
+- Backend container ran as root and both images carried stale-but-patchable Alpine CVEs (Batch 8) — fixed
+  same-session even though neither blocked the documented Critical-only gate, because the fixes were free.
+
+**What went well**: every batch ended with a real end-to-end verification (browser or docker-compose), not
+just unit tests passing — this is what caught both real bugs above. Document-first held up in practice, not
+just as a rule: re-reading docs/ux-sana3-ma.md before Batch 6 caught two real gaps in what Batch 5 shipped
+(profile scoped to ARTISAN-only, role-based redirect) before they became bugs a user would hit. CI went
+green on the first push with zero fix cycles, largely because local Semgrep/Trivy/Gitleaks runs in Batch 8
+already caught and fixed what CI would have caught anyway.
+
+**Carried forward into Sprint 2** (see .logs/risks.md for full detail): stateless JWT has no server-side
+session revocation beyond cookie TTL (accepted architectural limitation, not a bug — revisit only if a
+compliance requirement demands real revocation); local dev machine has port contention with other unrelated
+projects (4200/8080/5432 all taken) — not a project bug, just a standing note for whoever runs this locally
+next.
+
+**Not done / explicitly deferred** (YAGNI, not oversight): Kubernetes, staging deploy target (deploy-staging
+CI job is a placeholder), production environment, mail/notifications, search, payments — none were in
+Sprint 1 scope per docs/stories-sana3-ma.md.

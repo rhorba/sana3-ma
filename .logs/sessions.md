@@ -192,3 +192,34 @@ the frontend service actually gets added to docker-compose.yml (it's only ever b
 far) and where API_BASE_URL needs to become environment-configurable instead of the hardcoded
 localhost:8081 dev default in frontend/src/app/core/api.config.ts (flagged as a known placeholder back in
 Batch 5). See .logs/activity.md "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.
+
+## SESSION_END 2026-07-10 (Batch 7)
+Done this session:
+- BRAINSTORM/PLAN gates run with the user before executing: chose build-time ARG substitution for
+  API_BASE_URL over a runtime nginx env.js approach (YAGNI — no staging/prod split needed this sprint per
+  docs/devops-sana3-ma.md).
+- Added `frontend` service to docker-compose.yml (build args, FRONTEND_HOST_PORT:-4200:80, depends_on
+  backend). frontend/Dockerfile now takes ARG API_BASE_URL and writes it into core/api.config.ts before
+  `npm run build`. Fixed a stale .env/.env.example mismatch (API_BASE_URL said :8080, BACKEND_HOST_PORT
+  default is :8081) and added FRONTEND_HOST_PORT to both files.
+- Real bug caught during the smoke test, not before: nginx's default config has no SPA fallback, so any
+  direct navigation or hard reload of an Angular route (e.g. /register, /profile) 404'd — Batches 4-6 only
+  ever exercised `ng serve`'s own routing, so this was invisible until the actual container was tested.
+  Fixed with frontend/nginx.conf (`try_files $uri $uri/ /index.html;`), wired into the Dockerfile, and
+  documented in docs/devops-sana3-ma.md (document-first rule).
+- Local-machine-only issue, not a project bug: host port 4200 was already bound by an unrelated project's
+  container (atlas-events) on this machine. Remapped FRONTEND_HOST_PORT/CORS_ALLOWED_ORIGINS to 4202 in the
+  local .env only (gitignored) — .env.example keeps the clean 4200 default. Logged to .logs/risks.md so a
+  future session doesn't mistake this for a project misconfiguration.
+- Full end-to-end smoke test against the fully-dockerized stack (postgres + backend + frontend, no
+  `ng serve`, no local backend process): registered a fresh artisan account → auto-redirect to /profile
+  empty state → filled and saved the profile form → hard-reloaded (real nginx round trip, not an Angular
+  router nav) and confirmed both the route resolved correctly and session + profile data persisted →
+  logged out → confirmed /profile now redirects to /login?returnUrl=%2Fprofile. All 3 containers verified
+  healthy (backend /actuator/health UP, frontend HTTP 200, postgres healthy) throughout. No console errors
+  observed during the flow.
+- Committed locally as 0c2a73a (not pushed — push happens at sprint SHIP, Batch 10, per rule 7). Containers
+  stopped after testing.
+
+Next session: resume at Batch 8 (VERIFY — coverage: JaCoCo + Karma combined ≥80%, security scan: Semgrep/
+Trivy/Gitleaks). See .logs/activity.md "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.

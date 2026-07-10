@@ -335,3 +335,28 @@ controller, even for the same exception classes.
 (not just tests): full create/list/update/delete flow for an artisan, confirmed a buyer gets 403
 NOT_AN_ARTISAN on both create and list.
 Committed as dd63eee.
+
+## BATCH 13 2026-07-10 — public product browsing and search (Stories 4.1-4.3)
+`GET /api/v1/products` (paginated, filterable by craftType/region/price range/keyword) and
+`GET /api/v1/products/{id}`, both public (no auth). Cross-aggregate composition (a product plus its owning
+artisan's public summary) handled in the application layer: extended `ArtisanProfileRepository` with
+`findById`/`findByIds` (free — both already provided by Spring Data's `JpaRepository`, no new query needed),
+batch-fetch artisan profiles for a results page to avoid N+1. `PublicProductSummary` only carries an
+allowlist (displayName/craftType/region) — `contactPhone`/email have no field on the DTO at all, so there's
+no runtime filter that could be forgotten or bypassed.
+Real bug caught by the persistence test suite (not written into it — a genuine test failure surfaced it):
+PostgreSQL/Hibernate can't infer a null bind parameter's type inside `LOWER(:param)` and silently picks
+`bytea`, so any unset filter crashed with "function lower(bytea) does not exist". Fixed by pre-lowercasing
+filter values in Java before binding, so JPQL only ever calls `LOWER()` on a column (well-typed) — never on
+a parameter.
+Also hit a test-architecture limit: `PublicProductControllerTest` (a narrow `@WebMvcTest` slice) can't
+`@Import` the real `SecurityConfig` to verify its `permitAll` rule, since `SecurityConfig` is
+package-private in a different package (`ma.sana3.adapter.web.security`). Scoped that test to controller
+logic only (`@AutoConfigureMockMvc(addFilters=false)`) and verified the actual security rule — and the PII
+exclusion, filters, pagination, and 404 handling — via a live smoke test against the running containerized
+backend instead.
+Document-first updates: docs/security-sana3-ma.md (formalizes the public artisan directory PII decision),
+docs/database-sana3-ma.md (V3 schema, index/access-pattern notes), docs/architecture-sana3-ma.md (API
+table) — the latter two also backfill Sprint 1's logout endpoint and Batch 12's write endpoints, which were
+missed when those batches shipped.
+Committed as 909cc9c.

@@ -11,15 +11,20 @@
 | production | Live users | Manual tag / approved release (not needed sprint 1) |
 
 ## 2. CI Pipeline (GitHub Actions)
+Implemented in `.github/workflows/ci.yml` as 5 jobs matching the documented stages:
 ```yaml
 stages:
-  - lint            # checkstyle/spotless (backend), eslint (frontend)
-  - test            # JUnit+Testcontainers (backend), Vitest (frontend); fail CI if coverage < 80%
-  - security-scan   # SAST (Semgrep), SCA (Trivy), secrets (Gitleaks)
-  - build           # Docker images: backend, frontend
-  - deploy-staging  # auto on PR merge to main
+  - lint            # Spotless google-java-format check (backend), eslint (frontend)
+  - test            # JUnit+Testcontainers (backend, JaCoCo), Vitest (frontend); combined coverage
+                     # gated at 80% via scripts/check-coverage.sh
+  - security-scan   # SAST (Semgrep CLI), SCA (Trivy fs scan, Maven+npm), secrets (Gitleaks CLI via Docker)
+  - build           # Docker images: backend, frontend + Trivy image scan (Critical fails the build)
+  - deploy-staging  # placeholder job on push to main — no staging infra provisioned yet (see §1);
+                     # exists so the pipeline shape matches this doc, wire in a real target later
 ```
-CI must stay green: if a push turns CI red, stop other work, diagnose, fix, push again, repeat until green (per project rules).
+Picked Spotless over Checkstyle for backend lint (auto-fixable via `mvn spotless:apply`, minimal config).
+Trivy and Gitleaks run via their published Docker images/actions rather than requiring local installs.
+CI must stay green: if a push turns CI red, stop all other work, diagnose, fix, push again, repeat until green (per project rules).
 
 ## 3. Infrastructure
 - **Hosting**: Docker Compose, single host (sprint 1); no Kubernetes unless SDR-1 trigger in system-design doc fires

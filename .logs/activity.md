@@ -319,3 +319,19 @@ actually needs them, not guessed now). Flyway V3 migration: `products` table, FK
 immediately live — nothing to track). `mvn verify` green, including adapter-persistence's Testcontainers
 suite, which is the real check that V3's SQL is valid (Spring context won't start if a migration fails).
 Committed as 9630b0f (Sprint 2 plan docs) and 224ca86 (this batch).
+
+## BATCH 12 2026-07-10 — artisan self-service product CRUD (Stories 3.1-3.3)
+Full application/persistence/web stack for `POST/PUT/DELETE/GET /api/v1/artisan-profiles/me/products[/{id}]`,
+built by mirroring the artisanprofile bounded context's exact layering. Cross-bounded-context reuse decision:
+product handlers inject `ArtisanProfileRepository` to resolve `userId -> artisanProfileId` and reuse
+`NotAnArtisanException`/`ProfileNotFoundException` from the artisanprofile application package rather than
+duplicating them — same precondition ("must be an artisan with a profile") applies to creating a product as
+to creating the profile itself. Update/delete on another artisan's product returns 404 (not 403) — same
+no-info-disclosure pattern the security doc already established elsewhere. `ProductExceptionHandler` needed
+its own `@RestControllerAdvice(basePackages="ma.sana3.adapter.web.catalog")` — Spring's basePackages scoping
+means the artisanprofile package's advice doesn't catch exceptions thrown from a different package's
+controller, even for the same exception classes.
+24 new tests, full `mvn verify` green. Also smoke-tested the real endpoints against the dockerized stack
+(not just tests): full create/list/update/delete flow for an artisan, confirmed a buyer gets 403
+NOT_AN_ARTISAN on both create and list.
+Committed as dd63eee.

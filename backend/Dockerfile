@@ -13,6 +13,8 @@ RUN ./mvnw -B clean package -DskipTests
 
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
+RUN apk upgrade --no-cache && addgroup -S app && adduser -S app -G app
 COPY --from=build /app/bootstrap/target/sana3-backend.jar app.jar
+USER app
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -181,3 +181,27 @@ navigating to /profile directly bounced back to Home (artisanGuard blocking a no
 port workaround as Batch 5 (4201 + matching CORS_ALLOWED_ORIGINS), .env reverted afterward, docker/dev
 server stopped after testing.
 Committed locally as c3cbea7 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7).
+
+## BATCH 7 2026-07-10 — docker-compose full wiring + local end-to-end smoke test
+Added the `frontend` service to docker-compose.yml (build args from API_BASE_URL, port
+FRONTEND_HOST_PORT:-4200:80, depends_on backend). API_BASE_URL is baked into the static Angular build via a
+Docker build ARG in frontend/Dockerfile (writes core/api.config.ts before `npm run build`) — chosen over a
+runtime nginx env.js approach per YAGNI, since staging/prod aren't needed this sprint (docs/devops-sana3-ma.md
+§1). Fixed a stale .env/.env.example value (API_BASE_URL pointed at :8080, but BACKEND_HOST_PORT default is
+:8081 — never caught because nothing exercised the full container stack before this batch) and added
+FRONTEND_HOST_PORT.
+Real bug found and fixed during the smoke test: nginx's default config has no SPA fallback, so direct
+navigation or a hard reload on any Angular client-side route (e.g. /register, /profile) 404'd at the nginx
+level — only `ng serve`'s own dev-server routing had been exercised in Batches 4-6, so this never surfaced
+until the actual container was tested. Added frontend/nginx.conf (`try_files $uri $uri/ /index.html;`),
+wired it into the Dockerfile, documented it in docs/devops-sana3-ma.md.
+Local environment note: port 4200 was already bound by an unrelated project's container on this machine
+(atlas-events); remapped FRONTEND_HOST_PORT/CORS_ALLOWED_ORIGINS to 4202 in the local .env only (gitignored
+— .env.example keeps the clean 4200 default for other machines).
+Full end-to-end smoke test against the fully-dockerized stack (postgres + backend + frontend, no `ng serve`,
+no local backend process): registered a fresh artisan account, auto-redirected to /profile empty state,
+filled and saved the profile form, hard-reloaded (full nginx round trip, not an Angular router nav) and
+confirmed both the SPA route resolved and the session + profile data persisted, logged out, confirmed
+direct navigation to /profile now redirects to /login?returnUrl=%2Fprofile. All 3 containers verified
+healthy (backend /actuator/health UP, frontend 200, postgres healthy) before and after.
+Containers stopped after testing. Not yet committed — see next session.

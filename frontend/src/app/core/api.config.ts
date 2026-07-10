@@ -1,3 +1,3 @@
-// Dev-only default; Batch 7 (docker-compose full wiring) will make this environment-configurable
-// for the nginx-served production build.
+// Dev-only default for `ng serve`. The Docker build overwrites this file at build time
+// via the API_BASE_URL build ARG in frontend/Dockerfile.
 export const API_BASE_URL = 'http://localhost:8081/api/v1';

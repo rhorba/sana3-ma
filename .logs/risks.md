@@ -21,6 +21,13 @@ limitation of the architecture, not a regression, but worth remembering if a fut
 compliance requirement calls for real revocation (would need a server-side denylist or a move to opaque
 session tokens — out of scope for Sprint 1).
 
+## NOTE 2026-07-10 — Host port 4200 is contended on this dev machine
+Multiple unrelated local projects run their own docker-compose stacks on this machine, and another project
+(atlas-events) already binds host port 4200. This project's documented default (FRONTEND_HOST_PORT=4200 in
+.env.example, matching CORS_ALLOWED_ORIGINS) is fine for a clean machine, but on this machine the local
+.env remaps FRONTEND_HOST_PORT/CORS_ALLOWED_ORIGINS to 4202. If `docker compose up` fails with "port is
+already allocated", check `docker ps` across all projects before assuming this project's config is broken.
+
 ## NOTE 2026-07-09 — `ng build` needs internet access to inline Google Fonts
 `ng build` (production) fetches and inlines the Inter font CSS from fonts.googleapis.com at build time
 (hit a transient DNS failure once during Batch 6, unrelated to any code change — retry succeeded). Not a

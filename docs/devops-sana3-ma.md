@@ -54,12 +54,17 @@ COPY . .
 RUN npm run build
 FROM nginx:alpine
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 ```
 Note: Angular project is named `frontend` (not `sana3-ma-frontend`), and the new Angular application builder
 nests static output under `dist/frontend/browser/`. `.npmrc` (legacy-peer-deps=true) must be copied into the
-build stage — see risks.md for why.
+build stage — see risks.md for why. `nginx.conf` adds a `try_files $uri $uri/ /index.html;` SPA fallback —
+without it, direct navigation or a hard reload on any client-side route (e.g. `/register`) 404s at the nginx
+level, since those paths don't exist as files.
 `docker-compose.yml` wires: `postgres` (postgis/postgis image), `backend`, `frontend`, all reading from `.env`.
+`API_BASE_URL` is baked into the static build via a Docker build ARG (see frontend/Dockerfile) — the browser
+calls the backend directly at `http://localhost:${BACKEND_HOST_PORT}`, not through an nginx proxy.
 
 ## 6. Monitoring Baseline
 | Signal | Tool | Alert Threshold |

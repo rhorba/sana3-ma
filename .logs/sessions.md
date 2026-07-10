@@ -223,3 +223,39 @@ Done this session:
 
 Next session: resume at Batch 8 (VERIFY — coverage: JaCoCo + Karma combined ≥80%, security scan: Semgrep/
 Trivy/Gitleaks). See .logs/activity.md "PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.
+
+## SESSION_END 2026-07-10 (Batch 8, same continuous session — user said "yes" to continue)
+Done this session:
+- Added JaCoCo (jacoco-maven-plugin) to the backend parent pom — none existed before. Note: 0.8.12 (the
+  version I first tried) can't instrument Java 25 bytecode ("Unsupported class file major version 69");
+  had to bump to 0.8.13, which works.
+- Installed @vitest/coverage-v8 in frontend (missing — `ng test --coverage` errored without it) to get
+  coverage out of the new Angular 22 unit-test builder.
+- Coverage results: backend combined 89.9% line coverage (domain 79.7%, application 100%,
+  adapter-persistence 100%, adapter-web 84.1%), frontend 89.1% line coverage (54 tests). Blended
+  backend+frontend: 89.5% (625/698 lines) — clears the 80% gate with no new tests needed. Full numbers in
+  .logs/metrics.md "BATCH 8" entry.
+- Security scan (Semgrep local install, Trivy + Gitleaks via Docker since not installed locally — used a
+  persistent `trivy-cache` docker volume so the ~100MB vuln DB isn't re-downloaded every run):
+  - Semgrep (384 rules, backend/ + frontend/src): 1 finding — backend/Dockerfile ran the JVM as root, no
+    USER directive. Fixed (added non-root `app` user). Re-ran: 0 findings.
+  - Trivy SCA (fs scan, backend Maven + frontend npm): 0 Critical/High both. Maven scan initially hit a
+    429 from repo.maven.apache.org — fixed by mounting the host's ~/.m2 into the trivy container instead
+    of letting it re-resolve everything.
+  - Trivy image scan (both built images): 5 HIGH CVEs on backend (libexpat, p11-kit, stale Alpine
+    packages), 4 HIGH on frontend (c-ares, libexpat) — none Critical, so technically passed the documented
+    gate as-is, but fixes were already published in the Alpine repo so fixed anyway: added
+    `RUN apk upgrade --no-cache` to both Dockerfiles' final stage. Rebuilt + rescanned: 0/0.
+  - Gitleaks (full git history, 15 commits): 0 secrets.
+- Re-verified full stack still boots clean after the Dockerfile changes (non-root user didn't break
+  anything — Spring Boot doesn't need root): backend /actuator/health UP, frontend HTTP 200.
+- Committed locally as 1679bb1 (not pushed — push happens at sprint SHIP, Batch 10, per rule 7). Containers
+  stopped after testing.
+
+Next session: resume at Batch 9 (CI — GitHub Actions workflow: lint/test+coverage-gate/security-scan/build/
+deploy-staging per docs/devops-sana3-ma.md §2, push, then monitor CI and fix until green per rule 11). Two
+things to carry forward: (1) the Google Fonts network-fetch-during-build risk noted in .logs/risks.md — the
+GitHub Actions runner needs outbound internet during `ng build`, or self-host the font; (2) this session's
+Maven-429 workaround (mount ~/.m2) is local-only — CI will need its own dependency caching strategy (e.g.
+actions/cache on ~/.m2) if Trivy or `mvn` scanning runs there too. See .logs/activity.md "PLAN 2026-07-05 —
+Sprint 1 batches" for the full B1-B10 breakdown.

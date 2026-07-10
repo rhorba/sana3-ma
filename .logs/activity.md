@@ -280,3 +280,31 @@ next.
 **Not done / explicitly deferred** (YAGNI, not oversight): Kubernetes, staging deploy target (deploy-staging
 CI job is a placeholder), production environment, mail/notifications, search, payments — none were in
 Sprint 1 scope per docs/stories-sana3-ma.md.
+
+## PLAN 2026-07-10 — Sprint 2 backlog (product catalog & browsing)
+Full backlog written to docs/stories-sana3-ma-sprint2.md (Epic 3: Product Catalog self-service, Epic 4:
+Public Browsing & Search — 9 stories total). PRD explicitly separates "Product catalog & browsing" from
+"Orders, checkout, payment" as two future-scope bullets; this sprint stays on the catalog/browsing side.
+Four scope gaps the foundation docs didn't answer were filled with stated YAGNI defaults (flagged in the
+stories doc for override, not silently assumed): public no-login browsing, self-publish with no moderation,
+single image on local disk (not S3/MinIO), free-text craft-type category defaulting from the artisan's own
+profile. Also flagged a new PII consideration the catalog forces: public product listings need an
+artisan-summary DTO (displayName/craftType/region only, never contactPhone/email) — this is the "public
+artisan directory" trigger docs/database-sana3-ma.md §7 was already anticipating.
+
+Batch breakdown (continuing numbering from Sprint 1's B1-B10):
+B11 backend catalog domain + Flyway V3 (products table), domain/application scaffolding per ADR-1's
+    bounded-context convention (new `ma.sana3.domain.catalog` package)
+B12 backend product CRUD (artisan self-service: create/update/delete/list own) — Stories 3.1-3.3
+B13 backend public browsing/search (list published, detail, filters) — Stories 4.1-4.3, includes the
+    public-safe artisan-summary DTO and a docs/security-sana3-ma.md update (document-first)
+B14 backend image upload (single image, local disk volume)
+B15 frontend catalog NgRx slice + "My Products" UI — Story 3.4
+B16 frontend public browse/search UI + product detail page — Stories 4.4-4.5
+B17 docker-compose wiring for the image volume + any new env vars
+B18 VERIFY: coverage (JaCoCo+Vitest) >=80%, security scan (Semgrep/Trivy/Gitleaks)
+B19 CI: extend .github/workflows/ci.yml if new scanners/steps are needed, push, monitor+fix until green
+B20 SHIP: Playwright E2E (browse, search, product CRUD), video recording, sprint retro, final push,
+    SESSION_END
+
+Not yet user-confirmed — this is the PLAN artifact for review before EXECUTE starts (project rule 5).

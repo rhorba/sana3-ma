@@ -13,4 +13,6 @@ public interface ProductRepository {
   List<Product> findByArtisanProfileId(UUID artisanProfileId);
 
   void deleteById(UUID id);
+
+  ProductSearchResult search(ProductSearchCriteria criteria);
 }

@@ -57,8 +57,15 @@ Full schema owned by DBA — see docs/database-sana3-ma.md.
 | POST | /api/v1/auth/register | Register user (role: BUYER/ARTISAN) | Public |
 | POST | /api/v1/auth/login | Login, returns JWT + refresh token | Public |
 | POST | /api/v1/auth/refresh | Exchange refresh token for new access token | Refresh token |
+| POST | /api/v1/auth/logout | Expire the refresh cookie (Sprint 1 Batch 5) | Refresh token |
 | GET | /api/v1/artisan-profiles/me | Get own artisan profile | Required (ARTISAN) |
 | PUT | /api/v1/artisan-profiles/me | Create/update own artisan profile | Required (ARTISAN) |
+| GET | /api/v1/artisan-profiles/me/products | List own products (Sprint 2 Batch 12) | Required (ARTISAN) |
+| POST | /api/v1/artisan-profiles/me/products | Create a product (Sprint 2 Batch 12) | Required (ARTISAN) |
+| PUT | /api/v1/artisan-profiles/me/products/{id} | Update own product (Sprint 2 Batch 12) | Required (ARTISAN) |
+| DELETE | /api/v1/artisan-profiles/me/products/{id} | Delete own product (Sprint 2 Batch 12) | Required (ARTISAN) |
+| GET | /api/v1/products | Public product listing, paginated + filterable (Sprint 2 Batch 13) | Public |
+| GET | /api/v1/products/{id} | Public product detail (Sprint 2 Batch 13) | Public |
 
 ## 6. Security Considerations
 See docs/security-sana3-ma.md for full threat model. Summary:

@@ -30,6 +30,13 @@
 
 ## 5. Data Protection
 - **PII fields**: email, phone, contact address (artisan profile)
+- **Public artisan directory (Sprint 2, Batch 13)**: `GET /api/v1/products` and `GET /api/v1/products/{id}`
+  are unauthenticated and embed an artisan summary alongside each product. This is the "public artisan
+  directory" feature docs/database-sana3-ma.md §7 anticipated — the summary is built from an explicit
+  allowlist (`displayName`, `craftType`, `region`), never the full `ArtisanProfile` — `contactPhone` and the
+  owning user's `email` are structurally excluded (the response DTO has no field for them, not a
+  runtime filter), so there's no risk of a future field addition to `ArtisanProfile` silently leaking into
+  the public API.
 - **Encryption at rest**: Postgres volume encryption deferred to hosting provider (Docker Compose dev = not encrypted; note for staging/prod hosting choice)
 - **Encryption in transit**: HTTPS enforced in staging/prod (local Docker Compose may run HTTP for simplicity, documented as dev-only)
 - **Secrets management**: env vars via `.env` (git-ignored), dev-safe defaults in `.env.example`, real secrets injected via CI/CD secrets store at deploy time — never committed

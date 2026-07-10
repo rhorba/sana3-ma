@@ -5,6 +5,10 @@ import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.domain.catalog.Product;
 import ma.sana3.domain.catalog.ProductRepository;
+import ma.sana3.domain.catalog.ProductSearchCriteria;
+import ma.sana3.domain.catalog.ProductSearchResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -38,5 +42,24 @@ class ProductRepositoryAdapter implements ProductRepository {
   @Override
   public void deleteById(UUID id) {
     springDataProductRepository.deleteById(id);
+  }
+
+  @Override
+  public ProductSearchResult search(ProductSearchCriteria criteria) {
+    Page<ProductJpaEntity> page =
+        springDataProductRepository.search(
+            lowercase(criteria.craftType()),
+            lowercase(criteria.region()),
+            criteria.minPrice(),
+            criteria.maxPrice(),
+            lowercase(criteria.keyword()),
+            PageRequest.of(criteria.page(), criteria.pageSize()));
+    List<Product> products = page.getContent().stream().map(ProductEntityMapper::toDomain).toList();
+    return new ProductSearchResult(
+        products, page.getTotalElements(), criteria.page(), criteria.pageSize());
+  }
+
+  private static String lowercase(String value) {
+    return value == null ? null : value.toLowerCase();
   }
 }

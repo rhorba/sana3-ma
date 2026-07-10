@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.adapter.persistence.user.UserJpaEntity;
@@ -79,5 +80,34 @@ class ArtisanProfileRepositoryAdapterTest {
   @Test
   void findByUserIdReturnsEmptyForUnknownUser() {
     assertTrue(repository.findByUserId(UUID.randomUUID()).isEmpty());
+  }
+
+  @Test
+  void findsById() {
+    UUID userId = persistUser();
+    ArtisanProfile saved =
+        repository.save(
+            ArtisanProfile.create(
+                userId, "Fatima Zahra", "Pottery", "Fes", "Bio", "+212600000000"));
+
+    Optional<ArtisanProfile> found = repository.findById(saved.id());
+
+    assertTrue(found.isPresent());
+    assertEquals("Fatima Zahra", found.get().displayName());
+  }
+
+  @Test
+  void findsByIds() {
+    UUID userId1 = persistUser();
+    UUID userId2 = persistUser();
+    ArtisanProfile profile1 =
+        repository.save(ArtisanProfile.create(userId1, "Name 1", "Pottery", null, null, null));
+    ArtisanProfile profile2 =
+        repository.save(ArtisanProfile.create(userId2, "Name 2", "Weaving", null, null, null));
+
+    List<ArtisanProfile> found =
+        repository.findByIds(List.of(profile1.id(), profile2.id(), UUID.randomUUID()));
+
+    assertEquals(2, found.size());
   }
 }

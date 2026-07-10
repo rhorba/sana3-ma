@@ -2,7 +2,7 @@ package ma.sana3.application.auth;
 
 public interface PasswordHasher {
 
-    String hash(String rawPassword);
+  String hash(String rawPassword);
 
-    boolean matches(String rawPassword, String hash);
+  boolean matches(String rawPassword, String hash);
 }

@@ -6,15 +6,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class GetArtisanProfileHandler {
 
-    private final ArtisanProfileRepository artisanProfileRepository;
+  private final ArtisanProfileRepository artisanProfileRepository;
 
-    public GetArtisanProfileHandler(ArtisanProfileRepository artisanProfileRepository) {
-        this.artisanProfileRepository = artisanProfileRepository;
-    }
+  public GetArtisanProfileHandler(ArtisanProfileRepository artisanProfileRepository) {
+    this.artisanProfileRepository = artisanProfileRepository;
+  }
 
-    public ArtisanProfileResult handle(GetArtisanProfileQuery query) {
-        return artisanProfileRepository.findByUserId(query.userId())
-                .map(ArtisanProfileResultMapper::toResult)
-                .orElseThrow(ProfileNotFoundException::new);
-    }
+  public ArtisanProfileResult handle(GetArtisanProfileQuery query) {
+    return artisanProfileRepository
+        .findByUserId(query.userId())
+        .map(ArtisanProfileResultMapper::toResult)
+        .orElseThrow(ProfileNotFoundException::new);
+  }
 }

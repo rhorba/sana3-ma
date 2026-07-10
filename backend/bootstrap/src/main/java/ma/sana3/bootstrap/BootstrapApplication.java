@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories(basePackages = "ma.sana3.adapter.persistence")
 public class BootstrapApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(BootstrapApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(BootstrapApplication.class, args);
+  }
 }

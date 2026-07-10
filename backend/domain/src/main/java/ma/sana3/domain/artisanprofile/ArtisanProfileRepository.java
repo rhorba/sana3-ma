@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public interface ArtisanProfileRepository {
 
-    ArtisanProfile save(ArtisanProfile profile);
+  ArtisanProfile save(ArtisanProfile profile);
 
-    Optional<ArtisanProfile> findByUserId(UUID userId);
+  Optional<ArtisanProfile> findByUserId(UUID userId);
 }

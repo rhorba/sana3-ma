@@ -259,3 +259,34 @@ GitHub Actions runner needs outbound internet during `ng build`, or self-host th
 Maven-429 workaround (mount ~/.m2) is local-only — CI will need its own dependency caching strategy (e.g.
 actions/cache on ~/.m2) if Trivy or `mvn` scanning runs there too. See .logs/activity.md "PLAN 2026-07-05 —
 Sprint 1 batches" for the full B1-B10 breakdown.
+
+## SESSION_END 2026-07-10 (Batch 9, same continuous session — user said "yes" to continue)
+Done this session:
+- BRAINSTORM/PLAN gates run with the user: confirmed Spotless over Checkstyle for backend lint, and
+  explicitly flagged before executing that this batch's push would be the first real code push (not just
+  docs) to the shared repo — user confirmed via the plan-execution gate.
+- Added Spotless (google-java-format) to backend/pom.xml. Hit a real compatibility problem: the default
+  google-java-format bundled by spotless-maven-plugin 2.44.2 throws NoSuchMethodError on JDK 25's javac
+  internals; fixed by pinning google-java-format 1.27.0 and adding the standard --add-exports/--add-opens
+  JVM flags via backend/.mvn/jvm.config. Ran spotless:apply — reformatted 69 files (mechanical only, `mvn
+  verify` all-green afterward confirms no behavior change).
+- Built .github/workflows/ci.yml (5 jobs matching docs/devops-sana3-ma.md §2). Wrote scripts/check-coverage.sh
+  to enforce the combined 80% gate (couldn't rely on a single tool since backend=JaCoCo and frontend=Vitest;
+  discovered `ng test --coverage-reporters json-summary` was needed to get a machine-readable frontend
+  summary — the default reporters don't include one).
+  Verified third-party Action versions against the GitHub API before committing to them rather than
+  guessing (gh api repos/.../tags) — caught that gitleaks/gitleaks-action is a separate commercially-licensed
+  wrapper around the open-source gitleaks CLI; sidestepped that ambiguity by invoking the CLI's own Docker
+  image directly instead, same as Batch 8's manual scan.
+- Pushed 20 commits (Batches 1-9) to origin/main — the two risks carried forward from Batch 8's session-end
+  note (Google Fonts network fetch during `ng build`; Maven 429 rate-limiting) both turned out to be
+  non-issues in CI: `actions/setup-java`'s built-in Maven cache avoided the 429, and the Angular build's
+  Google Fonts fetch succeeded without incident.
+- Monitored the triggered CI run (29083741944) via `gh run watch`: **all 5 jobs passed on the first run**
+  (Lint 32s, Test+Coverage Gate 1m23s, Security Scan 58s, Build Docker Images 1m54s, Deploy to Staging 2s).
+  No red-CI diagnose-fix-repush cycle was needed.
+- Committed locally as 30a34dc (Spotless), fbda9f3 (CI workflow), 8791215 (exec-bit fix) — all pushed.
+
+Next session: resume at Batch 10 (SHIP — Playwright E2E + video recording covering all critical user flows
+per rule 9, final push, sprint retro, SESSION_END). This closes out Sprint 1. See .logs/activity.md
+"PLAN 2026-07-05 — Sprint 1 batches" for the full B1-B10 breakdown.

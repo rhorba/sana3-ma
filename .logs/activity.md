@@ -205,3 +205,28 @@ confirmed both the SPA route resolved and the session + profile data persisted, 
 direct navigation to /profile now redirects to /login?returnUrl=%2Fprofile. All 3 containers verified
 healthy (backend /actuator/health UP, frontend 200, postgres healthy) before and after.
 Containers stopped after testing. Not yet committed — see next session.
+
+## BATCH 9 2026-07-10 — CI (GitHub Actions)
+Added Spotless (google-java-format, pinned to 1.27.0 + JVM add-exports/add-opens flags in
+backend/.mvn/jvm.config — needed for it to run under JDK 25) as the backend lint tool, chosen over
+Checkstyle for being auto-fixable with minimal config. Reformatted the whole backend to a clean baseline
+(mechanical diff, no logic changes).
+Built .github/workflows/ci.yml: 5 jobs (lint, test, security-scan, build, deploy-staging) matching
+docs/devops-sana3-ma.md §2 exactly. Test job enforces the combined coverage gate via a new
+scripts/check-coverage.sh (blends backend JaCoCo line coverage + frontend Vitest json-summary line
+coverage, fails under 80%). Security-scan runs Semgrep CLI directly (not the marketplace action — avoided
+an unverified action interface), Trivy via the official aquasecurity/trivy-action@v0.36.0 (verified the tag
+exists via `gh api` before committing to it), and Gitleaks via its open-source Docker image directly
+(the gitleaks/gitleaks-action marketplace wrapper is a separate commercially-licensed product — sidestepped
+that ambiguity by running the same `docker run zricethezav/gitleaks` invocation used for manual scans in
+Batch 8). Build job builds both images and re-runs a Trivy image scan (Critical-only) as defense in depth.
+Deploy-staging is an explicit placeholder (echoes why) since no staging infra exists yet per docs §1 — the
+job exists so CI's shape matches the documented 5 stages, not to actually deploy anything.
+
+## PUSH 2026-07-10
+Branch: main | Commits: 20 (449b7ad..8791215) — first push of application code since the foundation-docs
+push on 2026-07-05. Covers all of Batches 1-9 (backend scaffold/auth/profile, frontend scaffold/auth-UI/
+profile-UI, docker-compose wiring, coverage+security verify, CI pipeline).
+CI run 29083741944 triggered automatically: **all 5 jobs green on the first run** (Lint 32s, Test+Coverage
+Gate 1m23s, Security Scan 58s, Build Docker Images 1m54s, Deploy to Staging 2s — ~4min total). No red-CI
+diagnose/fix cycle was needed (rule 11 monitoring requirement satisfied trivially).

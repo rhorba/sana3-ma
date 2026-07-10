@@ -28,6 +28,10 @@ Thumbs.db
 # Recordings (large binary, kept out of git; store elsewhere if needed)
 .recordings/
 
+# Playwright
+e2e/test-results/
+e2e/playwright-report/
+
 # Local Claude Code settings (machine-specific)
 .claude/settings.local.json
 

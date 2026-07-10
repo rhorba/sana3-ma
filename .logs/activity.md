@@ -360,3 +360,25 @@ docs/database-sana3-ma.md (V3 schema, index/access-pattern notes), docs/architec
 table) — the latter two also backfill Sprint 1's logout endpoint and Batch 12's write endpoints, which were
 missed when those batches shipped.
 Committed as 909cc9c.
+
+## BATCH 14 2026-07-10 — product image upload and serving
+`POST /api/v1/artisan-profiles/me/products/{id}/image` (multipart, ARTISAN-owned) and public
+`GET /api/v1/products/images/{filename}`. Storage modeled as a domain port (`ImageStorage`), implemented by
+`LocalDiskImageStorage` in adapter-web — content-type allowlisted (jpeg/png/webp, SVG deliberately excluded
+as an XSS vector) at the application layer before touching disk; stored filenames are always
+server-generated (random UUID + extension from the *validated* content type, never the client's filename);
+path-traversal-safe resolution on both write/delete and serve.
+Removed the raw client-supplied `imageUrl` field from `UpsertProductRequest`/create+update commands — it
+was dead scaffolding from Batch 12 that nothing validated or connected to real storage; leaving it after
+building the real mechanism would let a client set an arbitrary disconnected URL. Update now preserves the
+existing image on a text-only edit.
+Real bug caught by the live smoke test, not any unit test: the backend container has run as non-root since
+Batch 8, and `/app` (WORKDIR) is root-owned, so `Files.createDirectories("uploads")` failed with
+`AccessDeniedException` on boot — the app never started. Fixed by creating and chowning `/app/uploads` in
+the Dockerfile before `USER app`. Full upload→store→serve round trip verified against the running
+containerized backend (byte-for-byte content match, correct Content-Type, public no-auth access, unsupported
+type correctly rejected with 400).
+Document-first updates: docs/architecture-sana3-ma.md (API table), docs/security-sana3-ma.md (upload attack
+surface + mitigations), docs/devops-sana3-ma.md (Dockerfile snippet + the non-root/uploads-dir gotcha, so
+the next Dockerfile change doesn't reintroduce it).
+Committed as a7dd7b3.

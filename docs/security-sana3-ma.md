@@ -37,6 +37,15 @@
   owning user's `email` are structurally excluded (the response DTO has no field for them, not a
   runtime filter), so there's no risk of a future field addition to `ArtisanProfile` silently leaking into
   the public API.
+- **Product image upload (Sprint 2, Batch 14)**: `POST /api/v1/artisan-profiles/me/products/{id}/image`
+  accepts a multipart file, `GET /api/v1/products/images/{filename}` serves it back publicly. Mitigations:
+  content-type allowlisted to `image/jpeg`, `image/png`, `image/webp` at the application layer (SVG
+  deliberately excluded — a common image-upload XSS vector via embedded scripts); the stored filename is
+  always server-generated (a random UUID + an extension derived from the *validated* content type, never
+  the client-supplied filename or its extension); the serving endpoint always sets its own `Content-Type`
+  from the stored file's extension, never reflecting a client-supplied header; path-traversal-safe
+  resolution on both write and read (`Path.resolve(...).normalize()` checked against the upload root);
+  `spring.servlet.multipart.max-file-size` caps uploads at 5MB.
 - **Encryption at rest**: Postgres volume encryption deferred to hosting provider (Docker Compose dev = not encrypted; note for staging/prod hosting choice)
 - **Encryption in transit**: HTTPS enforced in staging/prod (local Docker Compose may run HTTP for simplicity, documented as dev-only)
 - **Secrets management**: env vars via `.env` (git-ignored), dev-safe defaults in `.env.example`, real secrets injected via CI/CD secrets store at deploy time — never committed

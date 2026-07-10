@@ -5,6 +5,7 @@ import ma.sana3.adapter.web.auth.ApiError;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.artisanprofile.ProfileNotFoundException;
 import ma.sana3.application.catalog.ProductNotFoundException;
+import ma.sana3.application.catalog.UnsupportedImageTypeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -30,6 +31,12 @@ class ProductExceptionHandler {
   ResponseEntity<ApiError> handleProductNotFound(ProductNotFoundException exception) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(new ApiError("PRODUCT_NOT_FOUND", exception.getMessage()));
+  }
+
+  @ExceptionHandler(UnsupportedImageTypeException.class)
+  ResponseEntity<ApiError> handleUnsupportedImageType(UnsupportedImageTypeException exception) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(new ApiError("UNSUPPORTED_IMAGE_TYPE", exception.getMessage()));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

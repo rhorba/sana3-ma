@@ -12,5 +12,4 @@ public record UpdateProductCommand(
     String description,
     BigDecimal priceAmount,
     String priceCurrency,
-    String craftType,
-    String imageUrl) {}
+    String craftType) {}

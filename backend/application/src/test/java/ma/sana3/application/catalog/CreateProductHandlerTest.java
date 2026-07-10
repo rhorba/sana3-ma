@@ -48,8 +48,7 @@ class CreateProductHandlerTest {
             "Handmade",
             new BigDecimal("450.00"),
             "MAD",
-            "Pottery",
-            null);
+            "Pottery");
     when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
     when(productRepository.save(any(Product.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
@@ -66,7 +65,7 @@ class CreateProductHandlerTest {
     UUID userId = UUID.randomUUID();
     CreateProductCommand command =
         new CreateProductCommand(
-            userId, Role.BUYER, "Name", null, new BigDecimal("10.00"), "MAD", "Craft", null);
+            userId, Role.BUYER, "Name", null, new BigDecimal("10.00"), "MAD", "Craft");
 
     assertThrows(NotAnArtisanException.class, () -> handler.handle(command));
 
@@ -78,7 +77,7 @@ class CreateProductHandlerTest {
     UUID userId = UUID.randomUUID();
     CreateProductCommand command =
         new CreateProductCommand(
-            userId, Role.ARTISAN, "Name", null, new BigDecimal("10.00"), "MAD", "Craft", null);
+            userId, Role.ARTISAN, "Name", null, new BigDecimal("10.00"), "MAD", "Craft");
     when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
     assertThrows(ProfileNotFoundException.class, () -> handler.handle(command));

@@ -38,7 +38,7 @@ public class CreateProductHandler {
             command.priceAmount(),
             command.priceCurrency(),
             command.craftType(),
-            command.imageUrl());
+            null);
 
     Product saved = productRepository.save(product);
     return ProductResultMapper.toResult(saved);

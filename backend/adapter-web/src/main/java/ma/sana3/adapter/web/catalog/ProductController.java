@@ -1,6 +1,8 @@
 package ma.sana3.adapter.web.catalog;
 
 import jakarta.validation.Valid;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.UUID;
 import ma.sana3.application.catalog.CreateProductCommand;
@@ -12,6 +14,8 @@ import ma.sana3.application.catalog.ListOwnProductsQuery;
 import ma.sana3.application.catalog.ProductResult;
 import ma.sana3.application.catalog.UpdateProductCommand;
 import ma.sana3.application.catalog.UpdateProductHandler;
+import ma.sana3.application.catalog.UploadProductImageCommand;
+import ma.sana3.application.catalog.UploadProductImageHandler;
 import ma.sana3.domain.user.Role;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +29,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/artisan-profiles/me/products")
@@ -37,16 +43,19 @@ class ProductController {
   private final UpdateProductHandler updateProductHandler;
   private final DeleteProductHandler deleteProductHandler;
   private final ListOwnProductsHandler listOwnProductsHandler;
+  private final UploadProductImageHandler uploadProductImageHandler;
 
   ProductController(
       CreateProductHandler createProductHandler,
       UpdateProductHandler updateProductHandler,
       DeleteProductHandler deleteProductHandler,
-      ListOwnProductsHandler listOwnProductsHandler) {
+      ListOwnProductsHandler listOwnProductsHandler,
+      UploadProductImageHandler uploadProductImageHandler) {
     this.createProductHandler = createProductHandler;
     this.updateProductHandler = updateProductHandler;
     this.deleteProductHandler = deleteProductHandler;
     this.listOwnProductsHandler = listOwnProductsHandler;
+    this.uploadProductImageHandler = uploadProductImageHandler;
   }
 
   @PostMapping
@@ -63,8 +72,7 @@ class ProductController {
                 request.description(),
                 request.priceAmount(),
                 request.priceCurrency(),
-                request.craftType(),
-                request.imageUrl()));
+                request.craftType()));
     return ResponseEntity.status(HttpStatus.CREATED).body(ProductResponse.from(result));
   }
 
@@ -84,8 +92,26 @@ class ProductController {
                 request.description(),
                 request.priceAmount(),
                 request.priceCurrency(),
-                request.craftType(),
-                request.imageUrl()));
+                request.craftType()));
+    return ProductResponse.from(result);
+  }
+
+  @PostMapping("/{id}/image")
+  ProductResponse uploadImage(
+      @AuthenticationPrincipal UUID userId,
+      Authentication authentication,
+      @PathVariable UUID id,
+      @RequestParam("file") MultipartFile file) {
+    byte[] content;
+    try {
+      content = file.getBytes();
+    } catch (IOException e) {
+      throw new UncheckedIOException("Could not read uploaded file", e);
+    }
+    ProductResult result =
+        uploadProductImageHandler.handle(
+            new UploadProductImageCommand(
+                userId, roleOf(authentication), id, content, file.getContentType()));
     return ProductResponse.from(result);
   }
 

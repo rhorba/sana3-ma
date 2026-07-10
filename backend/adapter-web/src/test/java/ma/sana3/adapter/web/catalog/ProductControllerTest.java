@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -21,10 +22,13 @@ import ma.sana3.application.catalog.DeleteProductHandler;
 import ma.sana3.application.catalog.ListOwnProductsHandler;
 import ma.sana3.application.catalog.ProductNotFoundException;
 import ma.sana3.application.catalog.ProductResult;
+import ma.sana3.application.catalog.UnsupportedImageTypeException;
 import ma.sana3.application.catalog.UpdateProductHandler;
+import ma.sana3.application.catalog.UploadProductImageHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
@@ -45,6 +49,8 @@ class ProductControllerTest {
   @MockitoBean private DeleteProductHandler deleteProductHandler;
 
   @MockitoBean private ListOwnProductsHandler listOwnProductsHandler;
+
+  @MockitoBean private UploadProductImageHandler uploadProductImageHandler;
 
   private static ProductResult stubResult(UUID artisanProfileId) {
     Instant now = Instant.now();
@@ -126,7 +132,7 @@ class ProductControllerTest {
                 .content(
                     objectMapper.writeValueAsString(
                         new UpsertProductRequest(
-                            "Name", null, new BigDecimal("10.00"), "MAD", "Craft", null))))
+                            "Name", null, new BigDecimal("10.00"), "MAD", "Craft"))))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.error.code").value("NOT_AN_ARTISAN"));
   }
@@ -145,9 +151,44 @@ class ProductControllerTest {
                 .content(
                     objectMapper.writeValueAsString(
                         new UpsertProductRequest(
-                            "Name", null, new BigDecimal("10.00"), "MAD", "Craft", null))))
+                            "Name", null, new BigDecimal("10.00"), "MAD", "Craft"))))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.error.code").value("PRODUCT_NOT_FOUND"));
+  }
+
+  @Test
+  void uploadImageReturnsUpdatedProduct() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(uploadProductImageHandler.handle(any())).thenReturn(stubResult(UUID.randomUUID()));
+    MockMultipartFile file =
+        new MockMultipartFile("file", "photo.jpg", "image/jpeg", "fake-image-bytes".getBytes());
+
+    mockMvc
+        .perform(
+            multipart("/api/v1/artisan-profiles/me/products/" + UUID.randomUUID() + "/image")
+                .file(file)
+                .with(csrf())
+                .with(asArtisan(userId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("Zellige Tile Set"));
+  }
+
+  @Test
+  void uploadImageRejectsUnsupportedType() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(uploadProductImageHandler.handle(any()))
+        .thenThrow(new UnsupportedImageTypeException("application/pdf"));
+    MockMultipartFile file =
+        new MockMultipartFile("file", "doc.pdf", "application/pdf", "not-an-image".getBytes());
+
+    mockMvc
+        .perform(
+            multipart("/api/v1/artisan-profiles/me/products/" + UUID.randomUUID() + "/image")
+                .file(file)
+                .with(csrf())
+                .with(asArtisan(userId)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error.code").value("UNSUPPORTED_IMAGE_TYPE"));
   }
 
   @Test

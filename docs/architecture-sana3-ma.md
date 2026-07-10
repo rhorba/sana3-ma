@@ -64,8 +64,10 @@ Full schema owned by DBA — see docs/database-sana3-ma.md.
 | POST | /api/v1/artisan-profiles/me/products | Create a product (Sprint 2 Batch 12) | Required (ARTISAN) |
 | PUT | /api/v1/artisan-profiles/me/products/{id} | Update own product (Sprint 2 Batch 12) | Required (ARTISAN) |
 | DELETE | /api/v1/artisan-profiles/me/products/{id} | Delete own product (Sprint 2 Batch 12) | Required (ARTISAN) |
+| POST | /api/v1/artisan-profiles/me/products/{id}/image | Upload/replace a product's image (Sprint 2 Batch 14) | Required (ARTISAN) |
 | GET | /api/v1/products | Public product listing, paginated + filterable (Sprint 2 Batch 13) | Public |
 | GET | /api/v1/products/{id} | Public product detail (Sprint 2 Batch 13) | Public |
+| GET | /api/v1/products/images/{filename} | Serve a stored product image (Sprint 2 Batch 14) | Public |
 
 ## 6. Security Considerations
 See docs/security-sana3-ma.md for full threat model. Summary:

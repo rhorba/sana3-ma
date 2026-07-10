@@ -11,5 +11,4 @@ public record CreateProductCommand(
     String description,
     BigDecimal priceAmount,
     String priceCurrency,
-    String craftType,
-    String imageUrl) {}
+    String craftType) {}

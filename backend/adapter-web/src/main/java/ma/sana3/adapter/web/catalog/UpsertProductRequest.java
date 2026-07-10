@@ -11,5 +11,4 @@ public record UpsertProductRequest(
     String description,
     @NotNull @DecimalMin(value = "0.01") BigDecimal priceAmount,
     @NotBlank @Size(min = 3, max = 3) String priceCurrency,
-    @NotBlank @Size(max = 100) String craftType,
-    @Size(max = 500) String imageUrl) {}
+    @NotBlank @Size(max = 100) String craftType) {}

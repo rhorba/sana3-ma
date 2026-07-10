@@ -47,10 +47,15 @@ FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 COPY target/*.jar app.jar
+RUN mkdir -p /app/uploads && chown -R app:app /app/uploads
 USER app
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
+Note: `/app/uploads` (product images, Sprint 2 Batch 14 — `app.upload.dir`) must be created and chowned to
+the non-root `app` user *before* `USER app` — the working directory itself (`/app`) is root-owned from the
+build stage, so a plain relative-path `Files.createDirectories()` at app startup fails with
+`AccessDeniedException` otherwise (caught by the Batch 14 live smoke test, not by any unit test).
 ```dockerfile
 # frontend/Dockerfile
 FROM node:22-alpine AS build

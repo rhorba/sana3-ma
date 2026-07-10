@@ -308,3 +308,14 @@ B20 SHIP: Playwright E2E (browse, search, product CRUD), video recording, sprint
     SESSION_END
 
 Not yet user-confirmed — this is the PLAN artifact for review before EXECUTE starts (project rule 5).
+
+## BATCH 11 2026-07-10 — backend catalog domain scaffold
+User confirmed the Sprint 2 plan ("start") — EXECUTE begins. New `ma.sana3.domain.catalog` package: `Product`
+entity and `ProductRepository` port, built by directly mirroring `artisanprofile`'s exact style (final
+entity, `create`/`withDetails`, narrow port with only the methods Stories 3.1-3.3 need — `save`, `findById`,
+`findByArtisanProfileId`, `deleteById`; browsing/search query methods deferred to Batch 13 when that story
+actually needs them, not guessed now). Flyway V3 migration: `products` table, FK to `artisan_profiles` with
+`ON DELETE CASCADE`, no `status` column (self-publish default from the stories doc means every product is
+immediately live — nothing to track). `mvn verify` green, including adapter-persistence's Testcontainers
+suite, which is the real check that V3's SQL is valid (Spring context won't start if a migration fails).
+Committed as 9630b0f (Sprint 2 plan docs) and 224ca86 (this batch).

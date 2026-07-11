@@ -66,6 +66,52 @@ export const catalogFeature = createFeature({
       ...state,
       error: message,
     })),
+
+    on(CatalogActions.searchProducts, (state): CatalogState => ({
+      ...state,
+      browseLoading: true,
+      browseError: null,
+    })),
+    on(CatalogActions.searchProductsSuccess, (state, { response }): CatalogState => ({
+      ...state,
+      browseResults: response.products,
+      browseTotalElements: response.totalElements,
+      browsePage: response.page,
+      browsePageSize: response.pageSize,
+      browseLoading: false,
+      browseError: null,
+    })),
+    on(CatalogActions.searchProductsFailure, (state, { message }): CatalogState => ({
+      ...state,
+      browseLoading: false,
+      browseError: message,
+    })),
+
+    on(CatalogActions.loadProductDetail, (state): CatalogState => ({
+      ...state,
+      productDetail: null,
+      productDetailLoading: true,
+      productDetailNotFound: false,
+      productDetailError: null,
+    })),
+    on(CatalogActions.loadProductDetailSuccess, (state, { product }): CatalogState => ({
+      ...state,
+      productDetail: product,
+      productDetailLoading: false,
+      productDetailNotFound: false,
+      productDetailError: null,
+    })),
+    on(CatalogActions.loadProductDetailNotFound, (state): CatalogState => ({
+      ...state,
+      productDetailLoading: false,
+      productDetailNotFound: true,
+      productDetailError: null,
+    })),
+    on(CatalogActions.loadProductDetailFailure, (state, { message }): CatalogState => ({
+      ...state,
+      productDetailLoading: false,
+      productDetailError: message,
+    })),
   ),
 });
 
@@ -77,4 +123,14 @@ export const {
   selectLoaded,
   selectSaving,
   selectError,
+  selectBrowseResults,
+  selectBrowseTotalElements,
+  selectBrowsePage,
+  selectBrowsePageSize,
+  selectBrowseLoading,
+  selectBrowseError,
+  selectProductDetail,
+  selectProductDetailLoading,
+  selectProductDetailNotFound,
+  selectProductDetailError,
 } = catalogFeature;

@@ -2,6 +2,7 @@
   <span>{{ title() }}</span>
   <span class="spacer"></span>
   <a mat-button routerLink="/">Home</a>
+  <a mat-button routerLink="/browse">Browse</a>
   @if (isAuthenticated()) {
     @if (isArtisan()) {
       <a mat-button routerLink="/profile">Profile</a>

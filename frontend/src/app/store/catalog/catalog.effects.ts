@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap } from 'rxjs';
@@ -96,6 +97,45 @@ export class CatalogEffects {
               }),
             ),
           ),
+        ),
+      ),
+    ),
+  );
+
+  searchProducts$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(CatalogActions.searchProducts),
+      switchMap(({ craftType, region, minPrice, maxPrice, q, page, pageSize }) =>
+        this.catalogService.searchProducts({ craftType, region, minPrice, maxPrice, q, page, pageSize }).pipe(
+          map((response) => CatalogActions.searchProductsSuccess({ response })),
+          catchError((error) =>
+            of(
+              CatalogActions.searchProductsFailure({
+                message: extractErrorMessage(error, "Couldn't load products. Please try again."),
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  loadProductDetail$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(CatalogActions.loadProductDetail),
+      switchMap(({ id }) =>
+        this.catalogService.getProductDetail(id).pipe(
+          map((product) => CatalogActions.loadProductDetailSuccess({ product })),
+          catchError((error) => {
+            if (error instanceof HttpErrorResponse && error.status === 404) {
+              return of(CatalogActions.loadProductDetailNotFound());
+            }
+            return of(
+              CatalogActions.loadProductDetailFailure({
+                message: extractErrorMessage(error, "Couldn't load this product. Please try again."),
+              }),
+            );
+          }),
         ),
       ),
     ),

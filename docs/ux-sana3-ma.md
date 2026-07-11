@@ -13,8 +13,10 @@
 [App Root]
 ├── /register
 ├── /login
-└── /profile                 (ARTISAN only — view/edit combined on one screen, Story 2.3)
-    └── /profile/products    (ARTISAN only — "My Products" list + add/edit, Sprint 2 Batch 15)
+├── /browse                   (public — no login required, Sprint 2 Batch 16)
+├── /products/:id             (public — product detail, Sprint 2 Batch 16)
+└── /profile                  (ARTISAN only — view/edit combined on one screen, Story 2.3)
+    └── /profile/products     (ARTISAN only — "My Products" list + add/edit, Sprint 2 Batch 15)
 ```
 (Sprint 1's original sketch had a separate `/profile/edit` sub-route; Story 2.3 combined view+edit into
 `/profile` itself, so that entry never existed as built — corrected here rather than left stale.)

@@ -1,0 +1,66 @@
+<div class="browse-page">
+  <h1>Browse Products</h1>
+
+  <form [formGroup]="filterForm" (ngSubmit)="submit()" novalidate class="filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Craft type</mat-label>
+      <input matInput formControlName="craftType" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Region</mat-label>
+      <input matInput formControlName="region" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Min price</mat-label>
+      <input matInput type="number" formControlName="minPrice" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Max price</mat-label>
+      <input matInput type="number" formControlName="maxPrice" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Search</mat-label>
+      <input matInput formControlName="q" />
+    </mat-form-field>
+
+    <button mat-flat-button color="primary" type="submit">Search</button>
+  </form>
+
+  @if (loading()) {
+    <p>Loading products…</p>
+  } @else if (results().length === 0) {
+    <p class="empty-state-prompt">No products match your search.</p>
+  } @else {
+    <ul class="product-grid">
+      @for (product of results(); track product.id) {
+        <li class="product-card">
+          <a [routerLink]="['/products', product.id]">
+            @if (product.imageUrl) {
+              <img [src]="apiOrigin + product.imageUrl" [alt]="product.name" />
+            } @else {
+              <div class="image-placeholder">No image</div>
+            }
+            <strong>{{ product.name }}</strong>
+          </a>
+          <span>{{ product.priceAmount }} {{ product.priceCurrency }} — {{ product.craftType }}</span>
+          <span class="artisan-summary">
+            by {{ product.artisan.displayName }}
+            @if (product.artisan.region) {
+              , {{ product.artisan.region }}
+            }
+          </span>
+        </li>
+      }
+    </ul>
+
+    <div class="pagination">
+      <button mat-button type="button" [disabled]="page() === 0" (click)="previousPage()">Previous</button>
+      <span>Page {{ page() + 1 }}</span>
+      <button mat-button type="button" [disabled]="!hasNextPage()" (click)="nextPage()">Next</button>
+    </div>
+  }
+</div>

@@ -76,4 +76,76 @@ describe('catalogReducer', () => {
     expect(state.saving).toBe(false);
     expect(state.error).toBe("Couldn't create");
   });
+
+  const publicProduct = {
+    id: 'product-1',
+    name: 'Zellige Tile Set',
+    description: 'Handmade blue zellige',
+    priceAmount: 450,
+    priceCurrency: 'MAD',
+    craftType: 'Pottery',
+    imageUrl: null,
+    artisan: { displayName: 'Fatima Zahra', craftType: 'Pottery', region: 'Fes' },
+  };
+
+  it('sets browseLoading and clears browseError on searchProducts', () => {
+    const withError: CatalogState = { ...initialCatalogState, browseError: 'previous error' };
+    const state = catalogReducer(withError, CatalogActions.searchProducts({}));
+    expect(state.browseLoading).toBe(true);
+    expect(state.browseError).toBeNull();
+  });
+
+  it('populates browse results on searchProductsSuccess', () => {
+    const state = catalogReducer(
+      initialCatalogState,
+      CatalogActions.searchProductsSuccess({
+        response: { products: [publicProduct], totalElements: 1, page: 0, pageSize: 20 },
+      }),
+    );
+    expect(state.browseResults).toEqual([publicProduct]);
+    expect(state.browseTotalElements).toBe(1);
+    expect(state.browseLoading).toBe(false);
+  });
+
+  it('sets browseError on searchProductsFailure', () => {
+    const loading: CatalogState = { ...initialCatalogState, browseLoading: true };
+    const state = catalogReducer(loading, CatalogActions.searchProductsFailure({ message: 'network error' }));
+    expect(state.browseLoading).toBe(false);
+    expect(state.browseError).toBe('network error');
+  });
+
+  it('clears productDetail and sets productDetailLoading on loadProductDetail', () => {
+    const withDetail: CatalogState = { ...initialCatalogState, productDetail: publicProduct };
+    const state = catalogReducer(withDetail, CatalogActions.loadProductDetail({ id: publicProduct.id }));
+    expect(state.productDetail).toBeNull();
+    expect(state.productDetailLoading).toBe(true);
+    expect(state.productDetailNotFound).toBe(false);
+  });
+
+  it('populates productDetail on loadProductDetailSuccess', () => {
+    const state = catalogReducer(
+      initialCatalogState,
+      CatalogActions.loadProductDetailSuccess({ product: publicProduct }),
+    );
+    expect(state.productDetail).toEqual(publicProduct);
+    expect(state.productDetailLoading).toBe(false);
+  });
+
+  it('marks productDetailNotFound on loadProductDetailNotFound (empty state, not an error)', () => {
+    const loading: CatalogState = { ...initialCatalogState, productDetailLoading: true };
+    const state = catalogReducer(loading, CatalogActions.loadProductDetailNotFound());
+    expect(state.productDetailNotFound).toBe(true);
+    expect(state.productDetailLoading).toBe(false);
+    expect(state.productDetailError).toBeNull();
+  });
+
+  it('sets productDetailError on loadProductDetailFailure', () => {
+    const loading: CatalogState = { ...initialCatalogState, productDetailLoading: true };
+    const state = catalogReducer(
+      loading,
+      CatalogActions.loadProductDetailFailure({ message: 'network error' }),
+    );
+    expect(state.productDetailLoading).toBe(false);
+    expect(state.productDetailError).toBe('network error');
+  });
 });

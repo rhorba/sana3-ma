@@ -30,6 +30,17 @@ describe('CatalogEffects', () => {
     craftType: 'Pottery',
   };
 
+  const publicProduct = {
+    id: 'product-1',
+    name: 'Zellige Tile Set',
+    description: 'Handmade blue zellige',
+    priceAmount: 450,
+    priceCurrency: 'MAD',
+    craftType: 'Pottery',
+    imageUrl: null,
+    artisan: { displayName: 'Fatima Zahra', craftType: 'Pottery', region: 'Fes' },
+  };
+
   let actions$: Observable<Action>;
   let catalogService: {
     listMyProducts: ReturnType<typeof vi.fn>;
@@ -37,6 +48,8 @@ describe('CatalogEffects', () => {
     updateProduct: ReturnType<typeof vi.fn>;
     deleteProduct: ReturnType<typeof vi.fn>;
     uploadImage: ReturnType<typeof vi.fn>;
+    searchProducts: ReturnType<typeof vi.fn>;
+    getProductDetail: ReturnType<typeof vi.fn>;
   };
   let effects: CatalogEffects;
 
@@ -58,6 +71,8 @@ describe('CatalogEffects', () => {
       updateProduct: vi.fn(),
       deleteProduct: vi.fn(),
       uploadImage: vi.fn(),
+      searchProducts: vi.fn(),
+      getProductDetail: vi.fn(),
     };
   });
 
@@ -144,5 +159,66 @@ describe('CatalogEffects', () => {
     const result = await firstValueFrom(effects.uploadProductImage$);
 
     expect(result).toEqual(CatalogActions.uploadProductImageFailure({ message: 'Unsupported image type' }));
+  });
+
+  it('searchProducts$ maps a successful search to searchProductsSuccess', async () => {
+    const response = { products: [publicProduct], totalElements: 1, page: 0, pageSize: 20 };
+    catalogService.searchProducts.mockReturnValue(of(response));
+    actions$ = of(CatalogActions.searchProducts({ craftType: 'Pottery' }));
+    setup();
+
+    const result = await firstValueFrom(effects.searchProducts$);
+
+    expect(catalogService.searchProducts).toHaveBeenCalledWith({ craftType: 'Pottery' });
+    expect(result).toEqual(CatalogActions.searchProductsSuccess({ response }));
+  });
+
+  it('searchProducts$ maps a failure to searchProductsFailure', async () => {
+    catalogService.searchProducts.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    actions$ = of(CatalogActions.searchProducts({}));
+    setup();
+
+    const result = await firstValueFrom(effects.searchProducts$);
+
+    expect(result).toEqual(
+      CatalogActions.searchProductsFailure({ message: "Couldn't load products. Please try again." }),
+    );
+  });
+
+  it('loadProductDetail$ maps a successful fetch to loadProductDetailSuccess', async () => {
+    catalogService.getProductDetail.mockReturnValue(of(publicProduct));
+    actions$ = of(CatalogActions.loadProductDetail({ id: publicProduct.id }));
+    setup();
+
+    const result = await firstValueFrom(effects.loadProductDetail$);
+
+    expect(catalogService.getProductDetail).toHaveBeenCalledWith(publicProduct.id);
+    expect(result).toEqual(CatalogActions.loadProductDetailSuccess({ product: publicProduct }));
+  });
+
+  it('loadProductDetail$ maps a 404 to loadProductDetailNotFound (empty state, not an error)', async () => {
+    catalogService.getProductDetail.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 404 })),
+    );
+    actions$ = of(CatalogActions.loadProductDetail({ id: 'missing' }));
+    setup();
+
+    const result = await firstValueFrom(effects.loadProductDetail$);
+
+    expect(result).toEqual(CatalogActions.loadProductDetailNotFound());
+  });
+
+  it('loadProductDetail$ maps other failures to loadProductDetailFailure', async () => {
+    catalogService.getProductDetail.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 })),
+    );
+    actions$ = of(CatalogActions.loadProductDetail({ id: publicProduct.id }));
+    setup();
+
+    const result = await firstValueFrom(effects.loadProductDetail$);
+
+    expect(result).toEqual(
+      CatalogActions.loadProductDetailFailure({ message: "Couldn't load this product. Please try again." }),
+    );
   });
 });

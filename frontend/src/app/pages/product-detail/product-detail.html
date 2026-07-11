@@ -1,0 +1,28 @@
+<div class="product-detail-page">
+  <a routerLink="/browse">← Back to Browse</a>
+
+  @if (loading()) {
+    <p>Loading product…</p>
+  } @else if (notFound()) {
+    <p class="not-found-prompt">This product couldn't be found. It may have been removed.</p>
+  } @else if (product(); as p) {
+    <h1>{{ p.name }}</h1>
+
+    @if (p.imageUrl) {
+      <img [src]="apiOrigin + p.imageUrl" [alt]="p.name" />
+    } @else {
+      <div class="image-placeholder">No image</div>
+    }
+
+    <p class="price">{{ p.priceAmount }} {{ p.priceCurrency }} — {{ p.craftType }}</p>
+
+    @if (p.description) {
+      <p class="description">{{ p.description }}</p>
+    }
+
+    <div class="artisan-summary">
+      <strong>Sold by {{ p.artisan.displayName }}</strong>
+      <span>{{ p.artisan.craftType }}@if (p.artisan.region) { , {{ p.artisan.region }} }</span>
+    </div>
+  }
+</div>

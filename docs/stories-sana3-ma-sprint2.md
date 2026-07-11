@@ -214,3 +214,15 @@ this or a later sprint adds a way to capture artisan location.
 | Sprint | Stories | Estimated Effort |
 |---|---|---|
 | Sprint 2 | 3.1, 3.2, 3.3, 3.4, 4.1, 4.2, 4.3, 4.4, 4.5 | ~7-9 days |
+
+## Release Gate Criteria (mirrors docs/test-strategy-sana3-ma.md §5's format for Sprint 1)
+- [x] All 9 stories' acceptance scenarios pass (Playwright, e2e/tests/catalog-flows.spec.ts, 2026-07-11 —
+      product CRUD, public browse/filter, product detail, not-found state, delete removes from both owner
+      list and public browsing)
+- [x] Combined unit + integration coverage ≥ 80% (89.7% at Batch 18, re-confirmed by CI at Batch 19)
+- [x] No critical/high security findings open (Semgrep/Trivy/Gitleaks clean on the first run — see
+      .logs/metrics.md Batch 18, no fixes needed unlike Sprint 1)
+- [x] E2E happy path passes and is recorded (`.recordings/v0.2-2026-07-11.webm`)
+- [x] CI green on the branch before SHIP (run 29157209571, all 5 jobs, first try)
+- [x] Sprint 1's regression suite (e2e/tests/critical-flows.spec.ts) still passes unmodified — confirms
+      Sprint 2 introduced no regressions to auth/profile

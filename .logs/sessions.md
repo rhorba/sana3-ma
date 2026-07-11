@@ -323,3 +323,40 @@ Done this session:
 Sprint 1 is complete: all 10 batches shipped, CI green, coverage 89.5%, zero open critical/high security
 findings, E2E happy path recorded. Next session starts Sprint 2 planning (new UNDERSTAND/BRAINSTORM/PLAN
 cycle with the user — no predetermined batch list exists yet, unlike this sprint's B1-B10).
+
+## SESSION_START 2026-07-10 (continued 2026-07-11) — Sprint 2
+User asked "what's the plan for sprint 2", then redirected from an interactive BRAINSTORM (rejected the
+AskUserQuestion tool call) to "look to docs folder and do a full sprint backlog to follow" — read the PRD's
+"Out of scope (future sprints)" list and picked Product Catalog & Browsing as the natural next sprint
+(artisan profiles from Sprint 1 exist to support product listings; everything else in that list — orders,
+payments — depends on products existing first). Wrote the full Sprint 2 backlog
+(docs/stories-sana3-ma-sprint2.md, Epic 3 + Epic 4, 9 stories) with 4 stated YAGNI defaults for gaps the
+foundation docs didn't answer, and a B11-B20 batch plan continuing Sprint 1's numbering. User approved with
+"start", then continued through every batch with a plain "yes, continue into B_" — one unbroken session
+across a date rollover (2026-07-10 -> 2026-07-11), no restarts.
+
+## SESSION_END 2026-07-11 — Sprint 2 complete (Batches 11-20)
+Full batch-by-batch detail is in .logs/activity.md (one entry per batch, "BATCH 11" through "BATCH 20", plus
+a full "RETRO 2026-07-11" entry) — not repeated here. Summary: shipped the full product catalog (artisan
+self-service CRUD + image upload) and public browsing/search (filterable listing + detail page), Epics 3-4
+complete, nothing cut from the planned backlog.
+Real bugs found and fixed via live smoke-testing every batch (not by unit tests, which structurally
+couldn't have caught most of these): a Postgres/Hibernate `LOWER(null)`->`bytea` type-inference bug in the
+search query (Batch 13); the non-root container from Sprint 1 Batch 8 couldn't write to its own upload
+directory (Batch 14); the Docker build silently drops any export added to frontend/core/api.config.ts
+(Batch 15, a Sprint 1 Batch 7 quirk rediscovered); an NgRx effect leaking the action's `type` field into an
+HTTP query param, caught by a genuine failing unit test (Batch 16); image persistence needed proving via a
+full container recreation, not just a restart (Batch 17).
+Coverage 89.7%, security scan clean on the first pass with zero fixes needed (contrast Sprint 1's Batch 8,
+which found three issues) — continuous scanning as each batch shipped paid off. CI required zero workflow
+changes across all ten batches, green on every push. E2E: new catalog-flows.spec.ts plus Sprint 1's
+critical-flows.spec.ts both green together, confirming no cross-sprint regressions. Video recorded to
+`.recordings/v0.2-2026-07-11.webm` (gitignored, local only).
+Final push done, CI monitored green. All Sprint 2 work committed and pushed to origin/main.
+
+Next session: no predetermined Sprint 3 plan exists. The one carried-forward open item from this sprint is
+geo-radius search ("artisans near me") — flagged in docs/stories-sana3-ma-sprint2.md's Open Question section
+as blocked on some future feature actually populating `artisan_profiles.location`. Otherwise, per the PRD's
+"Out of Scope (future sprints)" list, the remaining backlog is: orders/checkout/payment, QR-authenticated
+craft certificates, DHL export integration, cooperative multi-user accounts — Sprint 3 planning starts fresh
+with the user (UNDERSTAND/BRAINSTORM/PLAN), same as how Sprint 2 started.

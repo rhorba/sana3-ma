@@ -458,3 +458,57 @@ CI run 29157209571 triggered automatically: **all 5 jobs green on the first run*
 cycle needed — the existing Sprint 1 CI pipeline (Batch 9) required zero changes for Sprint 2's new surface
 (catalog domain, image upload, public endpoints all just fell out of the same lint/test/security-scan/build
 jobs).
+
+## BATCH 20 2026-07-11 — SHIP (Sprint 2)
+Added e2e/tests/catalog-flows.spec.ts covering all 9 of Sprint 2's stories in one continuous session:
+register+profile → add product → edit product → public browse + craftType filter → product detail with
+artisan summary → unknown-id not-found state → delete (native `confirm()` auto-accepted via
+`page.on('dialog')`) removes the product from both the owner's list and public browsing. Passed first try
+against the full docker-compose stack. Also ran the full e2e/ suite (this file + Sprint 1's
+critical-flows.spec.ts, unmodified) together — both green, confirming Sprint 2 introduced no regressions to
+auth/profile. Video saved to `.recordings/v0.2-2026-07-11.webm` (gitignored, local only — path noted here
+since it won't be in git history). Added a Release Gate Criteria section to
+docs/stories-sana3-ma-sprint2.md mirroring Sprint 1's format.
+
+## RETRO 2026-07-11 — Sprint 2 (Batches 11-20)
+**Delivered**: full product catalog (artisan self-service CRUD + image upload) and public browsing/search
+(filterable listing + detail page), Epics 3-4 in full, nothing cut. Backend: new `catalog` bounded context
+(domain/application/adapter-persistence/adapter-web) mirroring `artisanprofile`'s exact hexagonal layering,
+a cross-aggregate read path (batch-fetching artisan summaries to avoid N+1), local-disk image storage
+behind a domain port. Frontend: catalog NgRx slice extended for both owner (`/profile/products`) and public
+(`/browse`, `/products/:id`) views on one state tree. Docker: persistent image volume. CI: zero changes
+needed for any of it.
+
+**What deviated from the plan, and why**:
+- The 4 YAGNI defaults stated upfront in the Sprint 2 PLAN (public no-login browsing, self-publish/no
+  moderation, single local-disk image, free-text craft-type category) all held through to shipping
+  unchanged — no story forced a reconsideration.
+- Batch 12 reused `NotAnArtisanException`/`ProfileNotFoundException` across the catalog and artisanprofile
+  bounded contexts rather than duplicating them — same precondition applies to both, and duplicating would
+  have been the premature-abstraction-avoidance principle applied backwards.
+- Batch 13's cross-aggregate composition (product + its artisan's public summary) went in the application
+  layer via batch-fetch, not a persistence-layer join for the *read model* — but the *filter* query itself
+  (region lives on `artisan_profiles`, not `products`) genuinely needed a JPQL join, which surfaced a real
+  Postgres/Hibernate bug (`LOWER(null)` inferred as `bytea`) caught by a failing persistence test, not
+  written into one.
+- Batch 14 removed Batch 12's client-supplied `imageUrl` field once real upload storage existed — dead
+  scaffolding that would have been actively misleading (and a minor integrity risk) to leave in place.
+
+**What went well**: the "every batch ends with a live smoke test" practice from Sprint 1 kept paying off —
+it caught three real bugs unit tests structurally couldn't have caught (Batch 14's non-root container
+couldn't write to its upload dir; Batch 15's Docker build silently drops any export added to
+`api.config.ts`; Batch 17's volume persistence needed proving via full container recreation, not a
+restart). Security scanning integrated into each batch as it shipped (rather than deferred to one big
+end-of-sprint pass) meant Batch 18's VERIFY was clean on the first run, with zero fixes needed — a real
+contrast to Sprint 1's Batch 8, which found and fixed three issues at that late stage. CI required zero
+workflow changes across all ten batches.
+
+**Carried forward into Sprint 3**: geo-radius search ("artisans near me") is explicitly flagged as an Open
+Question in docs/stories-sana3-ma-sprint2.md, not started — `artisan_profiles.location` (PostGIS, enabled
+since Sprint 1) is still unpopulated, so there's nothing to search against yet; revisit once some feature
+actually captures artisan location. The stateless-JWT revocation limitation from Sprint 1 remains accepted
+and unchanged.
+
+**Not done / explicitly deferred** (YAGNI, matches the PRD's own scope split, not oversight): cart, orders,
+checkout, payment, QR certificates, DHL export, cooperative multi-user accounts — all still explicitly
+future-sprint scope.

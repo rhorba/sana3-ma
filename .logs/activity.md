@@ -439,3 +439,13 @@ ownership from Batch 8/14 survives the volume remount since Docker copies the mo
 ownership into a fresh named volume on first use.
 Updated docs/devops-sana3-ma.md's infrastructure section.
 Committed as 54786e3.
+
+## BATCH 18 2026-07-11 — VERIFY: coverage + security scan (Sprint 2)
+Combined backend+frontend line coverage 89.7% (`scripts/check-coverage.sh`, reused unchanged from Sprint 1
+Batch 9) — comfortably clears the 80% gate, no new tests needed. Security scan (Semgrep, Trivy SCA on
+Maven/frontend-npm/e2e-npm, Trivy image scan on both containers, Gitleaks on full history): **clean across
+every scanner on the first run**, no fixes required — unlike Sprint 1's Batch 8, which found and fixed 3
+real issues. Sprint 2's new attack surface (image upload, public browsing) had already been scanned
+incidentally as each batch shipped it (Batch 8's `apk upgrade --no-cache` pattern also kept both images'
+base packages current the whole way through).
+Full numbers in .logs/metrics.md "BATCH 18" entry. No code changes this batch — verify-only.

@@ -1,5 +1,6 @@
 package ma.sana3.adapter.persistence.order;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +31,13 @@ class OrderRepositoryAdapter implements OrderRepository {
   @Override
   public List<Order> findByBuyerUserId(UUID buyerUserId) {
     return springDataOrderRepository.findByBuyerUserId(buyerUserId).stream()
+        .map(OrderEntityMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public List<Order> findByIds(Collection<UUID> ids) {
+    return springDataOrderRepository.findAllById(ids).stream()
         .map(OrderEntityMapper::toDomain)
         .toList();
   }

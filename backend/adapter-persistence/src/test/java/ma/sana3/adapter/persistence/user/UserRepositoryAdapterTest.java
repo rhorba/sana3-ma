@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.domain.user.Role;
@@ -57,5 +58,15 @@ class UserRepositoryAdapterTest {
   @Test
   void findByIdReturnsEmptyForUnknownId() {
     assertTrue(repository.findById(UUID.randomUUID()).isEmpty());
+  }
+
+  @Test
+  void findsByIds() {
+    User first = repository.save(User.register("first@example.com", "hash", Role.BUYER));
+    User second = repository.save(User.register("second@example.com", "hash", Role.ARTISAN));
+
+    List<User> found = repository.findByIds(List.of(first.id(), second.id()));
+
+    assertEquals(2, found.size());
   }
 }

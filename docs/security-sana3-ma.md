@@ -46,6 +46,13 @@
   from the stored file's extension, never reflecting a client-supplied header; path-traversal-safe
   resolution on both write and read (`Path.resolve(...).normalize()` checked against the upload root);
   `spring.servlet.multipart.max-file-size` caps uploads at 5MB.
+- **Artisan-facing order fulfillment (Sprint 3, Batch 23)**: `GET /api/v1/artisan-profiles/me/orders`
+  deliberately exposes the buyer's `email` and the order's `shippingAddress` — real PII, but Story 6.3's own
+  AC requires it so an artisan knows who/where to ship to (a genuine business need, not an oversight).
+  Scoped narrowly: an artisan only ever sees `order_items` where `artisanProfileId` matches their own
+  profile (never another artisan's lines on a multi-artisan order, and never the buyer's `contactPhone`,
+  which doesn't exist on a BUYER-role user record). `POST .../{id}/complete` has the same ownership check
+  before allowing a status change.
 - **Encryption at rest**: Postgres volume encryption deferred to hosting provider (Docker Compose dev = not encrypted; note for staging/prod hosting choice)
 - **Encryption in transit**: HTTPS enforced in staging/prod (local Docker Compose may run HTTP for simplicity, documented as dev-only)
 - **Secrets management**: env vars via `.env` (git-ignored), dev-safe defaults in `.env.example`, real secrets injected via CI/CD secrets store at deploy time — never committed

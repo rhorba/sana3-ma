@@ -77,6 +77,17 @@ class OrderRepositoryAdapterTest {
   }
 
   @Test
+  void findsByIds() {
+    UUID buyerUserId = persistBuyer();
+    Order first = repository.save(Order.place(buyerUserId, "Address 1"));
+    Order second = repository.save(Order.place(buyerUserId, "Address 2"));
+
+    List<Order> found = repository.findByIds(List.of(first.id(), second.id()));
+
+    assertEquals(2, found.size());
+  }
+
+  @Test
   void savePersistsStatusTransitions() {
     UUID buyerUserId = persistBuyer();
     Order order = repository.save(Order.place(buyerUserId, "Address"));

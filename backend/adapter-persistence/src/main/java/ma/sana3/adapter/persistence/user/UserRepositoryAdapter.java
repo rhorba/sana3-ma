@@ -1,5 +1,7 @@
 package ma.sana3.adapter.persistence.user;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.domain.user.User;
@@ -29,6 +31,13 @@ class UserRepositoryAdapter implements UserRepository {
   @Override
   public Optional<User> findById(UUID id) {
     return springDataUserRepository.findById(id).map(UserEntityMapper::toDomain);
+  }
+
+  @Override
+  public List<User> findByIds(Collection<UUID> ids) {
+    return springDataUserRepository.findAllById(ids).stream()
+        .map(UserEntityMapper::toDomain)
+        .toList();
   }
 
   @Override

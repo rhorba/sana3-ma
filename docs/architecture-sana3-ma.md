@@ -69,6 +69,11 @@ Full schema owned by DBA — see docs/database-sana3-ma.md.
 | GET | /api/v1/products/{id} | Public product detail (Sprint 2 Batch 13) | Public |
 | GET | /api/v1/products/images/{filename} | Serve a stored product image (Sprint 2 Batch 14) | Public |
 | POST | /api/v1/orders | Place an order from cart items — server-computed total, product snapshot (Sprint 3 Batch 22) | Required (any role) |
+| GET | /api/v1/orders/me | List the caller's own order history (Sprint 3 Batch 23) | Required (any role) |
+| GET | /api/v1/orders/me/{id} | Get one of the caller's own orders, full detail (Sprint 3 Batch 23) | Required (any role) |
+| POST | /api/v1/orders/me/{id}/cancel | Cancel the caller's own order — blocked once any line item is fulfilled (Sprint 3 Batch 23) | Required (any role) |
+| GET | /api/v1/artisan-profiles/me/orders | List order items across all orders containing the artisan's own products, with buyer email + shipping address (Sprint 3 Batch 23) | Required (ARTISAN) |
+| POST | /api/v1/artisan-profiles/me/orders/{id}/complete | Mark one of the artisan's own order items fulfilled (Sprint 3 Batch 23) | Required (ARTISAN) |
 
 ## 6. Security Considerations
 See docs/security-sana3-ma.md for full threat model. Summary:

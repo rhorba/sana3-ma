@@ -3,6 +3,7 @@ package ma.sana3.adapter.web.order;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -12,10 +13,16 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import ma.sana3.application.catalog.ProductNotFoundException;
+import ma.sana3.application.order.CancelMyOrderHandler;
+import ma.sana3.application.order.GetMyOrderDetailHandler;
+import ma.sana3.application.order.ListMyOrdersHandler;
+import ma.sana3.application.order.OrderHasCompletedItemsException;
 import ma.sana3.application.order.OrderItemResult;
+import ma.sana3.application.order.OrderNotFoundException;
 import ma.sana3.application.order.OrderResult;
 import ma.sana3.application.order.OrderTotal;
 import ma.sana3.application.order.PlaceOrderHandler;
+import ma.sana3.domain.order.IllegalOrderStatusTransitionException;
 import ma.sana3.domain.order.OrderStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +40,12 @@ class OrderControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private PlaceOrderHandler placeOrderHandler;
+
+  @MockitoBean private ListMyOrdersHandler listMyOrdersHandler;
+
+  @MockitoBean private GetMyOrderDetailHandler getMyOrderDetailHandler;
+
+  @MockitoBean private CancelMyOrderHandler cancelMyOrderHandler;
 
   private static RequestPostProcessor asBuyer(UUID userId) {
     return SecurityMockMvcRequestPostProcessors.authentication(
@@ -142,5 +155,94 @@ class OrderControllerTest {
                         .formatted(UUID.randomUUID())))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.error.code").value("PRODUCT_NOT_FOUND"));
+  }
+
+  @Test
+  void listMineReturnsOwnOrders() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(listMyOrdersHandler.handle(any())).thenReturn(List.of(stubResult(userId)));
+
+    mockMvc
+        .perform(get("/api/v1/orders/me").with(asBuyer(userId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].status").value("PLACED"));
+  }
+
+  @Test
+  void getMineReturnsOrderDetail() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(getMyOrderDetailHandler.handle(any())).thenReturn(stubResult(userId));
+
+    mockMvc
+        .perform(get("/api/v1/orders/me/" + UUID.randomUUID()).with(asBuyer(userId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.shippingAddress").value("123 Rue Example, Fes"));
+  }
+
+  @Test
+  void getMineReturnsNotFoundForSomeoneElsesOrder() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(getMyOrderDetailHandler.handle(any())).thenThrow(new OrderNotFoundException());
+
+    mockMvc
+        .perform(get("/api/v1/orders/me/" + UUID.randomUUID()).with(asBuyer(userId)))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.error.code").value("ORDER_NOT_FOUND"));
+  }
+
+  @Test
+  void cancelMineReturnsCancelledOrder() throws Exception {
+    UUID userId = UUID.randomUUID();
+    Instant now = Instant.now();
+    OrderResult cancelled =
+        new OrderResult(
+            UUID.randomUUID(),
+            userId,
+            OrderStatus.CANCELLED,
+            "Address",
+            List.of(),
+            List.of(),
+            now,
+            now);
+    when(cancelMyOrderHandler.handle(any())).thenReturn(cancelled);
+
+    mockMvc
+        .perform(
+            post("/api/v1/orders/me/" + UUID.randomUUID() + "/cancel")
+                .with(csrf())
+                .with(asBuyer(userId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("CANCELLED"));
+  }
+
+  @Test
+  void cancelMineRejectsAnAlreadyCompletedOrder() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(cancelMyOrderHandler.handle(any()))
+        .thenThrow(
+            new IllegalOrderStatusTransitionException(
+                OrderStatus.COMPLETED, OrderStatus.CANCELLED));
+
+    mockMvc
+        .perform(
+            post("/api/v1/orders/me/" + UUID.randomUUID() + "/cancel")
+                .with(csrf())
+                .with(asBuyer(userId)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error.code").value("ILLEGAL_ORDER_STATUS_TRANSITION"));
+  }
+
+  @Test
+  void cancelMineRejectsAnOrderWithAFulfilledItem() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(cancelMyOrderHandler.handle(any())).thenThrow(new OrderHasCompletedItemsException());
+
+    mockMvc
+        .perform(
+            post("/api/v1/orders/me/" + UUID.randomUUID() + "/cancel")
+                .with(csrf())
+                .with(asBuyer(userId)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error.code").value("ORDER_HAS_COMPLETED_ITEMS"));
   }
 }

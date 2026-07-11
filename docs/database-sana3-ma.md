@@ -137,8 +137,11 @@ case-insensitive index on `products.craft_type` and `artisan_profiles.region`, a
   `GET /api/v1/products`) — it still excludes `contact_phone` and `users.email`, since public browsing only
   needed `displayName`/`craftType`/`region` to show "sold by X in Y" on a listing. See
   docs/security-sana3-ma.md §5 for the allowlist-shaped DTO that enforces this structurally.
-- `orders.shipping_address` is new PII (Sprint 3 Batch 21) — free-text, only ever readable by the owning
-  buyer (via `buyer_user_id`) and, implicitly, by artisans fulfilling their own `order_items` (address is not
-  currently exposed on the artisan-facing fulfillment endpoint planned for Batch 23 — scope that response DTO
-  to exclude `shipping_address` unless a later story explicitly needs artisans to see it).
+- `orders.shipping_address` is PII (Sprint 3 Batch 21), and Batch 23's Story 6.3 AC explicitly requires
+  artisans to see it ("buyer contact/shipping info") to know where to ship — so
+  `GET /api/v1/artisan-profiles/me/orders` intentionally returns it, along with `users.email` as the buyer's
+  contact (the only contact field a BUYER-role user record has; `contact_phone` stays ARTISAN-only and is
+  never exposed here). Both are scoped strictly to order items the calling artisan's own products appear on
+  (`order_items.artisan_profile_id` ownership check) — an artisan never sees another artisan's line items or
+  the buyer info behind them.
 - Row-level security: not needed yet (single-tenant access pattern — users only ever query their own row via `user_id` from JWT claim)

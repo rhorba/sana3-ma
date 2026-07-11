@@ -87,7 +87,7 @@ class OrderItemTest {
                 1)
             .complete();
 
-    assertThrows(IllegalStateException.class, completed::complete);
+    assertThrows(OrderItemAlreadyCompletedException.class, completed::complete);
   }
 
   @Test

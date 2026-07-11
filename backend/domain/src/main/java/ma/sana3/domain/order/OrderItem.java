@@ -69,7 +69,7 @@ public final class OrderItem {
 
   public OrderItem complete() {
     if (completedAt != null) {
-      throw new IllegalStateException("Order item is already completed");
+      throw new OrderItemAlreadyCompletedException();
     }
     return new OrderItem(
         id,

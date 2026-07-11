@@ -425,3 +425,17 @@ back in Batch 14/15 testing) actually rendered in the grid — real end-to-end p
 works, not just each piece in isolation.
 101 frontend tests (was 80), build/lint/test all clean. Updated docs/ux-sana3-ma.md's site map.
 Committed as f7a4ff1.
+
+## BATCH 17 2026-07-11 — persist product images with a named docker volume
+Added `sana3-product-images`, mounted at `/app/uploads` in the backend container — until now `UPLOAD_DIR`
+(Batch 14) only wrote to the container's ephemeral filesystem, so any uploaded image was lost the moment
+the container was recreated. `UPLOAD_DIR` is hardcoded in docker-compose.yml (not `${...:-}` templated
+like the host ports) since it must stay in lockstep with both the Dockerfile's precreated/chowned directory
+and the volume mount target — not something meant to be user-configurable.
+Verified live, not just assumed correct: uploaded an image, fully removed and recreated the backend
+container (`docker compose rm -f backend && up -d backend`, not just a restart), confirmed the pre-existing
+image still served correctly (200) and a fresh upload afterward still succeeded — the non-root `app` user's
+ownership from Batch 8/14 survives the volume remount since Docker copies the mount point's existing
+ownership into a fresh named volume on first use.
+Updated docs/devops-sana3-ma.md's infrastructure section.
+Committed as 54786e3.

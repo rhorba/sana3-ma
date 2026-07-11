@@ -571,3 +571,33 @@ Document-first update: docs/database-sana3-ma.md (orders/order_items schema, ind
 `shipping_address` PII note flagging it should stay out of the artisan-facing fulfillment DTO planned for
 Batch 23).
 Committed as 6ce2b3e.
+
+## BATCH 22 2026-07-11/12 — checkout: place an order (Story 5.2)
+`POST /api/v1/orders`, open to any authenticated role (Assumed Default #3 — an artisan can buy another
+artisan's product). New `ma.sana3.application.order` package mirroring `catalog`'s hexagonal layering:
+`PlaceOrderHandler` resolves each cart line's *current* product via `ProductRepository.findById` (never
+trusting a client-supplied price/name/total), snapshots it onto a new `OrderItem`, and computes the total
+server-side — grouped per currency (`List<OrderTotal>`), not a single blended total, per Sprint 3's stated
+multi-currency Open Question.
+Technical decision: `Order.place` + each `OrderItem.create` are saved inside one `@Transactional` handler
+method — the first genuinely multi-repository write in this codebase (every prior handler wrote to exactly
+one repository), so a mid-checkout DB failure can't leave a placed order with zero items. This required
+adding `spring-tx` as an explicit `application` module dependency (previously only pulled in transitively
+through `bootstrap`); version is managed by the existing `spring-boot-starter-parent` BOM, no new version to
+pin.
+A missing/deleted product referenced by a cart line is rejected with a per-line `PRODUCT_NOT_FOUND` error
+that names the product id (added an overloaded `ProductNotFoundException(UUID)` constructor — existing
+no-arg call sites in the catalog context are unaffected).
+16 new tests (3 application Mockito, 8 adapter-persistence Testcontainers across two repository adapters —
+including one proving `order_items.product_id` survives the referenced product being hard-deleted, which is
+the whole point of the snapshot pattern — and 4 adapter-web `@WebMvcTest`), all green. Fixed a Hibernate
+Validator deprecation warning surfaced during the first test run (`@Valid` on a `List` field instead of its
+type argument) by switching to `List<@Valid OrderLineItemRequest>`.
+VERIFY: live smoke test against the full docker-compose stack (not just tests) — registered an artisan +
+buyer, created a product, placed a 3-quantity order and confirmed the response's snapshot fields and
+server-computed total (300.00 MAD) matched the product's *current* price; confirmed 404 `PRODUCT_NOT_FOUND`
+on an unknown product id (with the id in the message), 400 `VALIDATION_FAILED` on a blank shipping address
+and on an empty items list, 401 on an unauthenticated request, and 201 for an artisan buying another
+artisan's product (Assumed Default #3).
+Document-first update: docs/architecture-sana3-ma.md (API table).
+Committed as 9dd57fa.

@@ -406,3 +406,22 @@ verified byte-for-byte in Batch 14.
 corrects a stale Sprint-1 sketch of a `/profile/edit` sub-route that was never actually built (Story 2.3
 combined view+edit into one screen).
 Committed as b86d877.
+
+## BATCH 16 2026-07-11 — public browse/search UI + product detail page (Stories 4.4-4.5)
+New public routes `/browse` (filterable grid — craftType/region/price-range/keyword/pagination) and
+`/products/:id`, neither guarded, matching Batch 13's already-public backend endpoints. Extended the
+existing `catalog` NgRx slice rather than adding a new feature — per the Sprint 2 plan's own technical note
+(shared product model, separate browse/mine/detail selectors on one state tree).
+Real bug caught by a genuine failing test (not written into the test to prove a point — it just failed):
+`searchProducts$` passed the whole search *action* straight to `CatalogService.searchProducts()`, leaking
+NgRx's `type` field into the HTTP call as a query param. Fixed by destructuring only the filter fields,
+matching every other effect in this slice.
+Live-tested against the full containerized stack, with data accumulated across this session's earlier
+batches still live in the persistent postgres volume: `/browse` lists products across artisans, the
+craftType filter narrows correctly (confirmed via network request inspection after two flaky click misses —
+browser-automation coordinate flakiness, not an app bug), direct navigation to `/products/:id` renders full
+detail + artisan summary, an unknown id shows the not-found prompt, and one product's image (uploaded live
+back in Batch 14/15 testing) actually rendered in the grid — real end-to-end proof the upload→browse chain
+works, not just each piece in isolation.
+101 frontend tests (was 80), build/lint/test all clean. Updated docs/ux-sana3-ma.md's site map.
+Committed as f7a4ff1.

@@ -68,6 +68,7 @@ Full schema owned by DBA — see docs/database-sana3-ma.md.
 | GET | /api/v1/products | Public product listing, paginated + filterable (Sprint 2 Batch 13) | Public |
 | GET | /api/v1/products/{id} | Public product detail (Sprint 2 Batch 13) | Public |
 | GET | /api/v1/products/images/{filename} | Serve a stored product image (Sprint 2 Batch 14) | Public |
+| POST | /api/v1/orders | Place an order from cart items — server-computed total, product snapshot (Sprint 3 Batch 22) | Required (any role) |
 
 ## 6. Security Considerations
 See docs/security-sana3-ma.md for full threat model. Summary:

@@ -551,3 +551,23 @@ No dedicated docker-compose/infra batch this sprint (unlike Sprint 2's B17) — 
 external service or volume, just new tables in the existing Postgres.
 
 Not yet user-confirmed — this is the PLAN artifact for review before EXECUTE starts (project rule 5).
+
+## BATCH 21 2026-07-11 — backend orders domain scaffold
+User confirmed the Sprint 3 plan ("ok lets start") — EXECUTE begins. New `ma.sana3.domain.order` package:
+`Order` and `OrderItem` entities plus `OrderRepository`/`OrderItemRepository` ports, mirroring the
+`catalog`/`artisanprofile` contexts' exact style (final immutable entities, static factory methods,
+behavior methods returning new instances, equals/hashCode by id only). `Order.place`/`.cancel`/`.complete`
+guard status transitions domain-side, throwing `IllegalOrderStatusTransitionException` outside `PLACED`.
+`OrderItem` snapshots `productName`/`priceAmount`/`priceCurrency`/`craftType` at order time (nullable
+`productId`, `ON DELETE SET NULL`) rather than live-joining `products` — this is what actually resolves
+Sprint 2's deferred product-hard-delete note. `artisanProfileId` is denormalized onto each line item
+(not derived via `productId`) so an artisan's fulfillment queue survives product deletion and each line
+can be completed independently per-artisan on a multi-artisan order.
+Flyway V4 migration: `orders` + `order_items` tables, indexes on `buyer_user_id`, `order_id`, and
+`artisan_profile_id`.
+13 new domain tests (6 `OrderTest`, 7 `OrderItemTest`), all green. `mvn verify` green across all 5 modules,
+including adapter-persistence's Testcontainers suite — confirms V4's SQL is valid.
+Document-first update: docs/database-sana3-ma.md (orders/order_items schema, indexes, access patterns, new
+`shipping_address` PII note flagging it should stay out of the artisan-facing fulfillment DTO planned for
+Batch 23).
+Committed as 6ce2b3e.

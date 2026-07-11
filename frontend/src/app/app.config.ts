@@ -15,6 +15,8 @@ import { authFeatureKey, authReducer } from './store/auth/auth.reducer';
 import { AuthEffects } from './store/auth/auth.effects';
 import { artisanProfileFeatureKey, artisanProfileReducer } from './store/artisan-profile/artisan-profile.reducer';
 import { ArtisanProfileEffects } from './store/artisan-profile/artisan-profile.effects';
+import { catalogFeatureKey, catalogReducer } from './store/catalog/catalog.reducer';
+import { CatalogEffects } from './store/catalog/catalog.effects';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,8 +27,9 @@ export const appConfig: ApplicationConfig = {
     provideStore({
       [authFeatureKey]: authReducer,
       [artisanProfileFeatureKey]: artisanProfileReducer,
+      [catalogFeatureKey]: catalogReducer,
     }),
-    provideEffects([AuthEffects, ArtisanProfileEffects]),
+    provideEffects([AuthEffects, ArtisanProfileEffects, CatalogEffects]),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     // Restore a session from the httpOnly refresh cookie (if any) before the app renders,
     // so route guards don't redirect an already-logged-in user to /login on page reload.

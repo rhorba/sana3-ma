@@ -5,6 +5,7 @@
   @if (isAuthenticated()) {
     @if (isArtisan()) {
       <a mat-button routerLink="/profile">Profile</a>
+      <a mat-button routerLink="/profile/products">My Products</a>
     }
     <button mat-button (click)="logout()">Log Out</button>
   } @else {

@@ -1,0 +1,89 @@
+<div class="products-page">
+  <h1>My Products</h1>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2>{{ editingId() ? 'Edit product' : 'Add a product' }}</h2>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <mat-error>Name is required.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="3"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Price</mat-label>
+      <input matInput type="number" step="0.01" formControlName="priceAmount" />
+      @if (form.controls.priceAmount.invalid && form.controls.priceAmount.touched) {
+        <mat-error>Enter a price greater than 0.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Currency</mat-label>
+      <input matInput formControlName="priceCurrency" maxlength="3" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Craft type</mat-label>
+      <input matInput formControlName="craftType" />
+      @if (form.controls.craftType.invalid && form.controls.craftType.touched) {
+        <mat-error>Craft type is required.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="form-actions">
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+        @if (saving()) {
+          <mat-spinner diameter="20" />
+        } @else {
+          {{ editingId() ? 'Save changes' : 'Add product' }}
+        }
+      </button>
+      @if (editingId()) {
+        <button mat-button type="button" (click)="cancelEdit()">Cancel</button>
+      }
+    </div>
+  </form>
+
+  <h2>Your products</h2>
+
+  @if (loading()) {
+    <p>Loading your products…</p>
+  } @else if (loaded() && products().length === 0) {
+    <p class="empty-state-prompt">You haven't added any products yet.</p>
+  } @else {
+    <ul class="product-list">
+      @for (product of products(); track product.id) {
+        <li class="product-card">
+          @if (product.imageUrl) {
+            <img [src]="apiOrigin + product.imageUrl" [alt]="product.name" />
+          } @else {
+            <div class="image-placeholder">No image</div>
+          }
+          <div class="product-details">
+            <strong>{{ product.name }}</strong>
+            <span>{{ product.priceAmount }} {{ product.priceCurrency }} — {{ product.craftType }}</span>
+            @if (product.description) {
+              <p>{{ product.description }}</p>
+            }
+          </div>
+          <div class="product-actions">
+            <label class="upload-label">
+              Upload image
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected(product, $event)" hidden />
+            </label>
+            <button mat-button type="button" (click)="startEdit(product)">Edit</button>
+            <button mat-button type="button" color="warn" (click)="deleteProduct(product)">Delete</button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

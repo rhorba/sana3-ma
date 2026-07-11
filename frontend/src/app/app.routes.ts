@@ -21,6 +21,11 @@ export const routes: Routes = [
     canActivate: [artisanGuard],
   },
   {
+    path: 'profile/products',
+    loadComponent: () => import('./pages/my-products/my-products').then((m) => m.MyProducts),
+    canActivate: [artisanGuard],
+  },
+  {
     path: '**',
     loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound),
   },

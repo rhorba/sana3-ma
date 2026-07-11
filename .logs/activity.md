@@ -512,3 +512,42 @@ and unchanged.
 **Not done / explicitly deferred** (YAGNI, matches the PRD's own scope split, not oversight): cart, orders,
 checkout, payment, QR certificates, DHL export, cooperative multi-user accounts — all still explicitly
 future-sprint scope.
+
+## PLAN 2026-07-11 — Sprint 3 backlog (orders & checkout)
+Full backlog written to docs/stories-sana3-ma-sprint3.md (Epic 5: Cart & Checkout, Epic 6: Order Visibility
+& Fulfillment — 8 stories). Chosen from the PRD's remaining "Out of Scope (future sprints)" list (QR certs,
+orders/checkout/payment, DHL export, cooperative accounts) based on three pieces of evidence already in the
+docs, not just inference: ADR-1 explicitly named "orders" as an anticipated bounded context alongside
+catalog (done) and certification; the PRD's user stories already describe buyers wanting to "browse and
+order"; and Sprint 2's own stories doc left itself a note on product hard-delete — "revisit when Sprint 3
+orders exist" — meaning Orders was already the assumed next sprint while Sprint 2 was being written.
+Split payment out of scope deliberately: the PRD bundles "Orders, checkout, CMI/Stripe payment" as one
+bullet, but real payment gateway integration (external merchant accounts, sandbox/production credentials,
+PCI-adjacent review) is materially different work from building the order lifecycle — Sprint 3 builds the
+full checkout flow ending in a placed order with no real payment step (closest real-world equivalent: cash
+on delivery), leaving gateway integration as an explicit Open Question for a later sprint. Five YAGNI
+defaults stated for other gaps: client-side-only cart (no backend cart table), order items snapshot product
+details rather than live-joining `products` (this is what actually resolves Sprint 2's deferred hard-delete
+note), any authenticated user (not just BUYER) can place an order, a simple 3-state order status
+(PLACED/COMPLETED/CANCELLED, not granular shipping tracking — that's what a later DHL-export sprint would
+actually need), and a one-off free-text shipping address (not a reusable address book).
+
+Batch breakdown (continuing numbering from Sprint 2's B11-B20):
+B21 backend orders domain scaffold (Order/OrderItem entities, repository port, Flyway V4 — orders +
+    order_items tables) — mirrors Batch 11's catalog scaffold pattern
+B22 backend checkout (POST /api/v1/orders — place order from cart items, server-computed total, product
+    snapshot, per-line validation) — Story 5.2
+B23 backend order history + status transitions (buyer GET/cancel, artisan GET/complete on their own
+    order_items) — Stories 6.1-6.3
+B24 frontend cart NgRx slice + UI (localStorage-backed, no backend cart) — Story 5.1
+B25 frontend checkout UI (review + place order + confirmation) — Story 5.3
+B26 frontend order history UI (buyer /orders + artisan /profile/orders) — Stories 6.4-6.5
+B27 VERIFY: coverage (JaCoCo+Vitest) >=80%, security scan (Semgrep/Trivy/Gitleaks)
+B28 CI: push, monitor+fix until green (existing pipeline from Sprint 1 Batch 9, no changes expected)
+B29 SHIP: Playwright E2E (cart, checkout, order history, artisan fulfillment), video recording
+    (.recordings/v0.3-[date].webm), sprint retro, final push, SESSION_END
+
+No dedicated docker-compose/infra batch this sprint (unlike Sprint 2's B17) — orders introduce no new
+external service or volume, just new tables in the existing Postgres.
+
+Not yet user-confirmed — this is the PLAN artifact for review before EXECUTE starts (project rule 5).

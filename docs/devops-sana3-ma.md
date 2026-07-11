@@ -30,6 +30,12 @@ CI must stay green: if a push turns CI red, stop all other work, diagnose, fix, 
 - **Hosting**: Docker Compose, single host (sprint 1); no Kubernetes unless SDR-1 trigger in system-design doc fires
 - **Compute**: containers (backend, frontend/nginx, postgres)
 - **Database**: containerized Postgres 16 + PostGIS, volume-mounted for persistence
+- **Product images** (Sprint 2 Batch 17): named volume `sana3-product-images` mounted at `/app/uploads` in
+  the backend container (matches `app.upload.dir`/`UPLOAD_DIR`, Batch 14). Verified live: uploaded an image,
+  fully removed and recreated the backend container (`docker compose rm -f backend && up -d backend`, not
+  just a restart), confirmed both the pre-existing image still served and a fresh upload afterward still
+  wrote successfully — the non-root `app` user's ownership (Batch 8/14) survives a volume remount since
+  Docker copies the mount point's existing ownership into a fresh named volume on first use.
 - **Secrets**: `.env` file (git-ignored) with dev-safe defaults from `.env.example`; CI secrets via GitHub Actions repository secrets
 - **Monitoring**: Spring Boot Actuator `/actuator/health` + `/actuator/metrics`; container logs via `docker compose logs`
 

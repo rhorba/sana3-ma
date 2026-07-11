@@ -449,3 +449,12 @@ real issues. Sprint 2's new attack surface (image upload, public browsing) had a
 incidentally as each batch shipped it (Batch 8's `apk upgrade --no-cache` pattern also kept both images'
 base packages current the whole way through).
 Full numbers in .logs/metrics.md "BATCH 18" entry. No code changes this batch — verify-only.
+
+## PUSH 2026-07-11
+Branch: main | Commits: 16 (2856105..6735056) — Batches 11-18 (catalog domain, product CRUD, public
+browsing/search, image upload, catalog frontend UI, browse/search UI, image volume persistence, VERIFY).
+CI run 29157209571 triggered automatically: **all 5 jobs green on the first run** (Lint 24s, Security Scan
+56s, Test+Coverage Gate 1m40s, Build Docker Images 2m14s, Deploy to Staging 3s). No red-CI diagnose/fix
+cycle needed — the existing Sprint 1 CI pipeline (Batch 9) required zero changes for Sprint 2's new surface
+(catalog domain, image upload, public endpoints all just fell out of the same lint/test/security-scan/build
+jobs).

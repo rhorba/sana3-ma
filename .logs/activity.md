@@ -601,3 +601,35 @@ and on an empty items list, 401 on an unauthenticated request, and 201 for an ar
 artisan's product (Assumed Default #3).
 Document-first update: docs/architecture-sana3-ma.md (API table).
 Committed as 9dd57fa.
+
+## BATCH 23 2026-07-11/12 — order history, cancellation, artisan fulfillment (Stories 6.1-6.3)
+Buyer: `GET /api/v1/orders/me` (list), `GET /api/v1/orders/me/{id}` (detail — 404 not 403 on someone else's
+order, same no-info-disclosure pattern already used elsewhere), `POST /api/v1/orders/me/{id}/cancel`
+(domain-guarded PLACED->CANCELLED transition).
+Artisan: `GET /api/v1/artisan-profiles/me/orders` lists `order_items` across every order containing the
+artisan's own products, batch-fetching the parent orders and buyers to avoid N+1 (mirrors Sprint 2 Batch
+13's artisan-summary batch-fetch). Story 6.3's AC explicitly requires buyer contact + shipping info for
+fulfillment, so this response deliberately includes `buyerEmail` and `shippingAddress` — a real, intentional
+PII exposure, documented in docs/security-sana3-ma.md rather than left implicit. `POST .../{id}/complete`
+marks one line item fulfilled, same ownership check (`order_items.artisan_profile_id`).
+Domain cleanup: `OrderItem.complete()` now throws a dedicated `OrderItemAlreadyCompletedException` instead
+of a bare `IllegalStateException`, matching `Order`'s own `IllegalOrderStatusTransitionException` pattern
+(B21's `OrderItemTest` updated to match — still a `RuntimeException` subtype, no other call sites affected).
+Both `OrderRepository` and `UserRepository` gained `findByIds(Collection<UUID>)`, free via Spring Data's
+`findAllById` — same pattern as Batch 13's `ArtisanProfileRepository.findByIds`.
+Real gap found during live smoke testing, fixed same-session: a buyer could cancel an order even after an
+artisan had already completed one of its line items, because the domain only guarded the *order's* own
+status, not its items'. Flagged to the user rather than silently deciding — user chose to block it.
+`CancelMyOrderHandler` now checks its order_items first and rejects with 409 `ORDER_HAS_COMPLETED_ITEMS` if
+any is already fulfilled; re-verified live against the dockerized stack after the fix.
+27 new tests (5 application handlers x Mockito incl. the new cancel-guard case, 2 adapter-persistence
+`findByIds` cases, 2 adapter-web controllers incl. the new `ArtisanOrderController`), all green — full `mvn
+verify` across all 5 modules green (58 adapter-web tests total).
+VERIFY: full live smoke test against docker-compose — buyer list/detail/cancel, artisan list (confirmed
+`buyerEmail`/`shippingAddress` visible) and complete (200, then 409 on a repeat), a second buyer 404'd on
+someone else's order, a buyer 403'd on the artisan-only list endpoint, and the cancel-guard fix specifically
+re-verified after rebuilding the container.
+Document-first updates: docs/architecture-sana3-ma.md (API table), docs/database-sana3-ma.md (§7 revised
+now that shipping_address/buyer email are intentionally artisan-visible), docs/security-sana3-ma.md (new
+artisan-fulfillment PII section).
+Committed as 36248ca.

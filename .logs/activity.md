@@ -382,3 +382,27 @@ Document-first updates: docs/architecture-sana3-ma.md (API table), docs/security
 surface + mitigations), docs/devops-sana3-ma.md (Dockerfile snippet + the non-root/uploads-dir gotcha, so
 the next Dockerfile change doesn't reintroduce it).
 Committed as a7dd7b3.
+
+## BATCH 15 2026-07-10/11 — catalog NgRx slice + "My Products" UI (Story 3.4)
+New `/profile/products` route (artisanGuard-protected): combined add/edit form + a card list of the
+artisan's own products (Edit/Delete/per-product image upload). Built by mirroring the artisan-profile
+feature's NgRx layering exactly, extended for a list resource instead of a single record — create appends,
+update/image-upload replace the matching entry by id, delete filters it out.
+Real bug caught by the live smoke test, not any unit test: the Docker build regenerates
+`core/api.config.ts` *entirely* from a build ARG (Batch 7) — any other export added to that file is
+silently dropped. My first attempt exported `API_ORIGIN` from it (needed to turn the API's relative image
+paths into absolute `<img src>` URLs); built fine under `ng serve` (reads the source as-is) but failed the
+actual Docker build. Fixed by moving it to a new `core/api-origin.ts` that imports `API_BASE_URL`, and
+documented the constraint directly in `api.config.ts`'s comment so a future batch doesn't rediscover it the
+hard way.
+Live-tested end-to-end against the full containerized stack: register artisan → profile → `/profile/products`
+empty state → add product (reflected in list) → edit product (price change persisted) → direct navigation
+to `/profile/products` (SPA fallback + guard both correct). Image upload and delete are covered by unit
+tests (mocking the `File` object and `window.confirm` respectively) but not re-verified live in-browser —
+the browser tool's file-upload capability wasn't available this session, and delete's native `confirm()`
+dialog would have blocked further browser automation; the backend upload endpoint itself was already
+verified byte-for-byte in Batch 14.
+80 frontend tests (was 54), build/lint/test all clean. Updated docs/ux-sana3-ma.md's site map — also
+corrects a stale Sprint-1 sketch of a `/profile/edit` sub-route that was never actually built (Story 2.3
+combined view+edit into one screen).
+Committed as b86d877.

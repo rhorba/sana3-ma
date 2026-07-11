@@ -12,6 +12,10 @@
 users ──1:1──> artisan_profiles   (only when users.role = 'ARTISAN')
 users ──N:1──> roles              (via users.role, enum-backed)
 artisan_profiles ──1:N──> products
+users ──1:N──> orders             (buyer)
+orders ──1:N──> order_items
+products ──0:N──> order_items     (ON DELETE SET NULL — snapshot columns preserve history)
+artisan_profiles ──1:N──> order_items
 ```
 
 ## 3. Schema Design
@@ -57,12 +61,48 @@ CREATE TABLE products (
 No `status`/moderation column — Sprint 2's self-publish default (docs/stories-sana3-ma-sprint2.md) means every
 product is immediately live, so there's nothing to track.
 
+```sql
+-- Table: orders (Sprint 3, Batch 21)
+CREATE TABLE orders (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  buyer_user_id     UUID NOT NULL REFERENCES users(id),
+  status            VARCHAR(20) NOT NULL CHECK (status IN ('PLACED','COMPLETED','CANCELLED')),
+  shipping_address  TEXT NOT NULL,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Table: order_items (Sprint 3, Batch 21)
+CREATE TABLE order_items (
+  id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id                 UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id               UUID REFERENCES products(id) ON DELETE SET NULL,
+  product_name_snapshot    VARCHAR(150) NOT NULL,
+  price_amount_snapshot    NUMERIC(10,2) NOT NULL CHECK (price_amount_snapshot > 0),
+  price_currency_snapshot  VARCHAR(3) NOT NULL,
+  craft_type_snapshot      VARCHAR(100) NOT NULL,
+  artisan_profile_id       UUID NOT NULL REFERENCES artisan_profiles(id),
+  quantity                 INTEGER NOT NULL CHECK (quantity > 0),
+  completed_at             TIMESTAMPTZ,
+  created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+Line items snapshot `product_name`/`price`/`currency`/`craft_type` at order time rather than joining live to
+`products`, so a product can still be hard-deleted (`ON DELETE SET NULL` on `product_id`) without corrupting
+past order history. `artisan_profile_id` is denormalized onto each line item (not derived via `product_id`)
+so an artisan's fulfillment queue survives product deletion too, and so each line item can be
+completed/cancelled independently per-artisan on a multi-artisan order (YAGNI default per
+docs/stories-sana3-ma-sprint3.md — no per-order split-shipment UI yet, but the data model doesn't block it).
+
 ## 4. Index Strategy
 | Table | Index Name | Columns | Query Pattern |
 |---|---|---|---|
 | users | idx_users_email | (email) | login lookup by email (also enforced by UNIQUE) |
 | artisan_profiles | idx_artisan_profiles_user_id | (user_id) | fetch own profile by authenticated user (also enforced by UNIQUE) |
 | products | idx_products_artisan_profile_id | (artisan_profile_id) | list an artisan's own products; ownership joins on write endpoints |
+| orders | idx_orders_buyer_user_id | (buyer_user_id) | buyer's own order history |
+| order_items | idx_order_items_order_id | (order_id) | line items for one order |
+| order_items | idx_order_items_artisan_profile_id | (artisan_profile_id) | artisan's fulfillment queue across all orders |
 
 Public browsing/search (Batch 13) currently runs an unindexed `LOWER(craft_type)`/`LOWER(region)` filter
 and a `LIKE '%...%'` scan on `name`/`description` — acceptable at sprint-2 data volumes (no test/staging
@@ -76,6 +116,7 @@ case-insensitive index on `products.craft_type` and `artisan_profiles.region`, a
 | V1__init_users_and_roles.sql | Create `users` table + role check constraint | Yes (DROP TABLE) |
 | V2__create_artisan_profiles.sql | Create `artisan_profiles` table + PostGIS extension enable | Yes (DROP TABLE / DROP EXTENSION) |
 | V3__create_products.sql | Create `products` table, FK to `artisan_profiles` (ON DELETE CASCADE) | Yes (DROP TABLE) |
+| V4__create_orders.sql | Create `orders` + `order_items` tables, snapshot columns, FK to `products` (ON DELETE SET NULL) | Yes (DROP TABLE) |
 
 ## 6. Access Patterns
 | Use Case | Query Pattern | Index Coverage |
@@ -86,6 +127,9 @@ case-insensitive index on `products.craft_type` and `artisan_profiles.region`, a
 | List own products | SELECT by artisan_profile_id | idx_products_artisan_profile_id |
 | Public browse/search | SELECT products JOIN artisan_profiles, filtered + paginated | none yet (see §4) |
 | Product detail | SELECT product by id + artisan_profiles by id | primary keys |
+| Place order | INSERT order + order_items in one transaction | primary keys |
+| Buyer order history | SELECT orders by buyer_user_id, JOIN order_items by order_id | idx_orders_buyer_user_id, idx_order_items_order_id |
+| Artisan fulfillment queue | SELECT order_items by artisan_profile_id | idx_order_items_artisan_profile_id |
 
 ## 7. Sensitive Data
 - Columns requiring protection: `password_hash` (bcrypt, never returned in API responses), `contact_phone`
@@ -93,4 +137,8 @@ case-insensitive index on `products.craft_type` and `artisan_profiles.region`, a
   `GET /api/v1/products`) — it still excludes `contact_phone` and `users.email`, since public browsing only
   needed `displayName`/`craftType`/`region` to show "sold by X in Y" on a listing. See
   docs/security-sana3-ma.md §5 for the allowlist-shaped DTO that enforces this structurally.
+- `orders.shipping_address` is new PII (Sprint 3 Batch 21) — free-text, only ever readable by the owning
+  buyer (via `buyer_user_id`) and, implicitly, by artisans fulfilling their own `order_items` (address is not
+  currently exposed on the artisan-facing fulfillment endpoint planned for Batch 23 — scope that response DTO
+  to exclude `shipping_address` unless a later story explicitly needs artisans to see it).
 - Row-level security: not needed yet (single-tenant access pattern — users only ever query their own row via `user_id` from JWT claim)

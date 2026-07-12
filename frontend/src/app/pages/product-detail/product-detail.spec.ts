@@ -3,6 +3,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 
 import { PublicProductResponse } from '../../core/catalog/catalog.models';
+import { CartActions } from '../../store/cart/cart.actions';
 import { CatalogActions } from '../../store/catalog/catalog.actions';
 import {
   selectProductDetail,
@@ -90,5 +91,29 @@ describe('ProductDetail', () => {
     expect(fixture.nativeElement.textContent).toContain('Zellige Tile Set');
     expect(fixture.nativeElement.textContent).toContain('Sold by Fatima Zahra');
     expect(fixture.nativeElement.textContent).toContain('Fes');
+  });
+
+  it('dispatches addItem with the selected quantity when Add to Cart is clicked', async () => {
+    await configure('product-1');
+    store.overrideSelector(selectProductDetail, product);
+    createComponent();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    component.quantity.set(3);
+    fixture.nativeElement.querySelector('.add-to-cart button').click();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      CartActions.addItem({
+        item: {
+          productId: 'product-1',
+          productName: 'Zellige Tile Set',
+          priceAmount: 450,
+          priceCurrency: 'MAD',
+          craftType: 'Pottery',
+          imageUrl: null,
+        },
+        quantity: 3,
+      }),
+    );
   });
 });

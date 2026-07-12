@@ -15,6 +15,7 @@
 ├── /login
 ├── /browse                   (public — no login required, Sprint 2 Batch 16)
 ├── /products/:id             (public — product detail, Sprint 2 Batch 16)
+├── /cart                     (public — no login required, client-side only, Sprint 3 Batch 24)
 └── /profile                  (ARTISAN only — view/edit combined on one screen, Story 2.3)
     └── /profile/products     (ARTISAN only — "My Products" list + add/edit, Sprint 2 Batch 15)
 ```

@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 
 import { PublicProductResponse } from '../../core/catalog/catalog.models';
+import { CartActions } from '../../store/cart/cart.actions';
 import { CatalogActions } from '../../store/catalog/catalog.actions';
 import {
   selectBrowseError,
@@ -123,6 +124,28 @@ describe('Browse', () => {
 
     expect(dispatchSpy).toHaveBeenCalledWith(
       expect.objectContaining({ page: 1 }),
+    );
+  });
+
+  it('dispatches addItem when Add to Cart is clicked', () => {
+    store.overrideSelector(selectBrowseResults, [product]);
+    createComponent();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    fixture.nativeElement.querySelector('.product-card button').click();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      CartActions.addItem({
+        item: {
+          productId: 'product-1',
+          productName: 'Zellige Tile Set',
+          priceAmount: 450,
+          priceCurrency: 'MAD',
+          craftType: 'Pottery',
+          imageUrl: null,
+        },
+        quantity: 1,
+      }),
     );
   });
 });

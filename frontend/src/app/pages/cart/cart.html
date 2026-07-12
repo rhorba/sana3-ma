@@ -1,0 +1,41 @@
+<div class="cart-page">
+  <h1>Your Cart</h1>
+
+  @if (items().length === 0) {
+    <p class="empty-state-prompt">Your cart is empty. <a routerLink="/browse">Browse products</a> to add some.</p>
+  } @else {
+    <ul class="cart-list">
+      @for (item of items(); track item.productId) {
+        <li class="cart-item">
+          @if (item.imageUrl) {
+            <img [src]="apiOrigin + item.imageUrl" [alt]="item.productName" />
+          } @else {
+            <div class="image-placeholder">No image</div>
+          }
+          <div class="cart-item-details">
+            <strong>{{ item.productName }}</strong>
+            <span>{{ item.priceAmount }} {{ item.priceCurrency }} — {{ item.craftType }}</span>
+          </div>
+          <mat-form-field appearance="outline" class="quantity-field">
+            <mat-label>Qty</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              [value]="item.quantity"
+              (change)="updateQuantity(item.productId, +$any($event.target).value)"
+            />
+          </mat-form-field>
+          <span class="line-total">{{ item.priceAmount * item.quantity }} {{ item.priceCurrency }}</span>
+          <button mat-button type="button" (click)="remove(item.productId)">Remove</button>
+        </li>
+      }
+    </ul>
+
+    <div class="cart-totals">
+      @for (total of totals(); track total.currency) {
+        <p><strong>Total ({{ total.currency }}):</strong> {{ total.amount }} {{ total.currency }}</p>
+      }
+    </div>
+  }
+</div>

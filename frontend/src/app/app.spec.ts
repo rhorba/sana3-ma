@@ -5,6 +5,7 @@ import { App } from './app';
 import { routes } from './app.routes';
 import { authFeatureKey, authReducer } from './store/auth/auth.reducer';
 import { artisanProfileFeatureKey, artisanProfileReducer } from './store/artisan-profile/artisan-profile.reducer';
+import { cartFeatureKey, cartReducer } from './store/cart/cart.reducer';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -15,6 +16,7 @@ describe('App', () => {
         provideStore({
           [authFeatureKey]: authReducer,
           [artisanProfileFeatureKey]: artisanProfileReducer,
+          [cartFeatureKey]: cartReducer,
         }),
       ],
     }).compileComponents();

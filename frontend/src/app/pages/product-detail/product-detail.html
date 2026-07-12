@@ -24,5 +24,13 @@
       <strong>Sold by {{ p.artisan.displayName }}</strong>
       <span>{{ p.artisan.craftType }}@if (p.artisan.region) { , {{ p.artisan.region }} }</span>
     </div>
+
+    <div class="add-to-cart">
+      <mat-form-field appearance="outline" class="quantity-field">
+        <mat-label>Qty</mat-label>
+        <input matInput type="number" min="1" [(ngModel)]="quantity" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="button" (click)="addToCart(p)">Add to Cart</button>
+    </div>
   }
 </div>

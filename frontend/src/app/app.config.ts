@@ -17,6 +17,8 @@ import { artisanProfileFeatureKey, artisanProfileReducer } from './store/artisan
 import { ArtisanProfileEffects } from './store/artisan-profile/artisan-profile.effects';
 import { catalogFeatureKey, catalogReducer } from './store/catalog/catalog.reducer';
 import { CatalogEffects } from './store/catalog/catalog.effects';
+import { cartFeatureKey, cartReducer } from './store/cart/cart.reducer';
+import { cartLocalStorageMetaReducer } from './store/cart/cart.storage';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,11 +26,15 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideStore({
-      [authFeatureKey]: authReducer,
-      [artisanProfileFeatureKey]: artisanProfileReducer,
-      [catalogFeatureKey]: catalogReducer,
-    }),
+    provideStore(
+      {
+        [authFeatureKey]: authReducer,
+        [artisanProfileFeatureKey]: artisanProfileReducer,
+        [catalogFeatureKey]: catalogReducer,
+        [cartFeatureKey]: cartReducer,
+      },
+      { metaReducers: [cartLocalStorageMetaReducer] },
+    ),
     provideEffects([AuthEffects, ArtisanProfileEffects, CatalogEffects]),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     // Restore a session from the httpOnly refresh cookie (if any) before the app renders,

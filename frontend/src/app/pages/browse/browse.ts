@@ -7,6 +7,8 @@ import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 
 import { API_ORIGIN } from '../../core/api-origin';
+import { PublicProductResponse } from '../../core/catalog/catalog.models';
+import { CartActions } from '../../store/cart/cart.actions';
 import { CatalogActions } from '../../store/catalog/catalog.actions';
 import {
   selectBrowseError,
@@ -61,6 +63,22 @@ export class Browse {
 
   hasNextPage(): boolean {
     return (this.page() + 1) * this.pageSize() < this.totalElements();
+  }
+
+  addToCart(product: PublicProductResponse): void {
+    this.store.dispatch(
+      CartActions.addItem({
+        item: {
+          productId: product.id,
+          productName: product.name,
+          priceAmount: product.priceAmount,
+          priceCurrency: product.priceCurrency,
+          craftType: product.craftType,
+          imageUrl: product.imageUrl,
+        },
+        quantity: 1,
+      }),
+    );
   }
 
   private search(page: number): void {

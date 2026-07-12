@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 
 import { AuthActions } from './store/auth/auth.actions';
 import { selectIsAuthenticated, selectRole } from './store/auth/auth.selectors';
+import { selectCartItemCount } from './store/cart/cart.selectors';
 
 @Component({
   selector: 'app-root',
@@ -21,6 +22,7 @@ export class App {
   protected readonly isAuthenticated = this.store.selectSignal(selectIsAuthenticated);
   private readonly role = this.store.selectSignal(selectRole);
   protected readonly isArtisan = computed(() => this.role() === 'ARTISAN');
+  protected readonly cartItemCount = this.store.selectSignal(selectCartItemCount);
 
   logout(): void {
     this.store.dispatch(AuthActions.logout());

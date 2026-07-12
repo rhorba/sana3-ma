@@ -695,3 +695,31 @@ instead of a generic failure, with the cart left untouched afterward. Also confi
 visit to `/checkout` redirects to `/login?returnUrl=%2Fcheckout`.
 Document-first update: docs/ux-sana3-ma.md site map.
 Committed as a22bfe5.
+
+## BATCH 26 2026-07-12 — order history UI: buyer /orders + artisan /profile/orders (Stories 6.4-6.5)
+Extended the `order` NgRx slice from Batch 25 with list/cancel (buyer) and list/complete (artisan) actions,
+reducers, and effects — built only when this batch's stories actually needed them, same incremental pattern
+as every prior slice extension this sprint.
+Buyer `/orders` (any authenticated role, existing `authGuard`): each order card shows status/items/total
+with a Cancel action on `PLACED` orders; a snackbar surfaces the backend's exact rejection message (e.g.
+Batch 23's `ORDER_HAS_COMPLETED_ITEMS`) instead of a generic failure. Artisan `/profile/orders`
+(`artisanGuard`, alongside `/profile/products`): lists `order_items` across all orders containing the
+artisan's own products, showing buyer email + shipping address (Batch 23's intentional PII exposure) with a
+Mark completed action; completed items show a badge instead of the button.
+Real backend gap found live while verifying this batch, symmetric to Batch 23's cancel-guard fix: an artisan
+could mark an order item COMPLETED even after the buyer had already cancelled the whole order —
+`CompleteArtisanOrderItemHandler` only checked item-level ownership/completion, never the parent order's
+status. Flagged to the user rather than silently deciding — user chose to fix it. Handler now fetches the
+order before completing the item and rejects with 409 `ORDER_CANCELLED` if it's `CANCELLED`. Fixed and
+committed separately (`fix(backend)`, not bundled into this batch's `feat(frontend)` commit) since it's a
+backend correctness fix, not a frontend feature; re-verified via curl (before: 200, after: 409) and again
+from the artisan orders UI itself (clicking "Mark completed" on a cancelled order's item now correctly
+leaves it uncompleted).
+24 new/changed frontend tests, plus 2 new backend tests (handler + controller) for the cancel-guard fix —
+full `mvn verify` and `ng test`/`lint`/`build` all clean.
+VERIFY: full live smoke test against the dockerized stack in a fresh browser tab — buyer with two placed
+orders cancels one (flips to CANCELLED, action disappears, other order untouched); artisan sees both
+order_items with correct buyer/shipping info, completes one (200, badge appears); then the cancelled-order
+completion gap found and re-verified as above.
+Document-first update: docs/ux-sana3-ma.md site map.
+Committed as 96b4607 (backend fix) and b24fe0b (frontend feature).

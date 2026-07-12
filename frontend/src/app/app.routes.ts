@@ -26,6 +26,11 @@ export const routes: Routes = [
     canActivate: [artisanGuard],
   },
   {
+    path: 'profile/orders',
+    loadComponent: () => import('./pages/artisan-orders/artisan-orders').then((m) => m.ArtisanOrders),
+    canActivate: [artisanGuard],
+  },
+  {
     path: 'browse',
     loadComponent: () => import('./pages/browse/browse').then((m) => m.Browse),
   },
@@ -40,6 +45,11 @@ export const routes: Routes = [
   {
     path: 'checkout',
     loadComponent: () => import('./pages/checkout/checkout').then((m) => m.Checkout),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'orders',
+    loadComponent: () => import('./pages/orders/orders').then((m) => m.Orders),
     canActivate: [authGuard],
   },
   {

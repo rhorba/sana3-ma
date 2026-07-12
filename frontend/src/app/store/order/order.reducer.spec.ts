@@ -49,4 +49,62 @@ describe('orderFeature reducer', () => {
 
     expect(state).toEqual(initialOrderState);
   });
+
+  it('stores the list on listMyOrdersSuccess', () => {
+    const state = orderFeature.reducer(initialOrderState, OrderActions.listMyOrdersSuccess({ orders: [order] }));
+
+    expect(state.myOrders).toEqual([order]);
+    expect(state.myOrdersLoading).toBe(false);
+    expect(state.myOrdersLoaded).toBe(true);
+  });
+
+  it('replaces the matching order on cancelOrderSuccess', () => {
+    const loaded = orderFeature.reducer(initialOrderState, OrderActions.listMyOrdersSuccess({ orders: [order] }));
+    const cancelled = { ...order, status: 'CANCELLED' as const };
+
+    const state = orderFeature.reducer(loaded, OrderActions.cancelOrderSuccess({ order: cancelled }));
+
+    expect(state.myOrders).toEqual([cancelled]);
+  });
+
+  const artisanItem = {
+    id: 'item-1',
+    orderId: 'order-1',
+    orderStatus: 'PLACED' as const,
+    shippingAddress: '123 Rue Example, Fes',
+    buyerEmail: 'buyer@example.com',
+    productId: 'product-1',
+    productName: 'Zellige Tile Set',
+    priceAmount: 450,
+    priceCurrency: 'MAD',
+    craftType: 'Pottery',
+    quantity: 2,
+    lineTotal: 900,
+    completed: false,
+    completedAt: null,
+    orderCreatedAt: '2026-01-01T00:00:00Z',
+  };
+
+  it('stores the list on listArtisanOrderItemsSuccess', () => {
+    const state = orderFeature.reducer(
+      initialOrderState,
+      OrderActions.listArtisanOrderItemsSuccess({ items: [artisanItem] }),
+    );
+
+    expect(state.artisanOrderItems).toEqual([artisanItem]);
+    expect(state.artisanOrderItemsLoading).toBe(false);
+    expect(state.artisanOrderItemsLoaded).toBe(true);
+  });
+
+  it('replaces the matching item on completeArtisanOrderItemSuccess', () => {
+    const loaded = orderFeature.reducer(
+      initialOrderState,
+      OrderActions.listArtisanOrderItemsSuccess({ items: [artisanItem] }),
+    );
+    const completed = { ...artisanItem, completed: true, completedAt: '2026-01-02T00:00:00Z' };
+
+    const state = orderFeature.reducer(loaded, OrderActions.completeArtisanOrderItemSuccess({ item: completed }));
+
+    expect(state.artisanOrderItems).toEqual([completed]);
+  });
 });

@@ -39,3 +39,21 @@ export interface OrderResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ArtisanOrderItemResponse {
+  id: string;
+  orderId: string;
+  orderStatus: OrderStatus;
+  shippingAddress: string;
+  buyerEmail: string;
+  productId: string | null;
+  productName: string;
+  priceAmount: number;
+  priceCurrency: string;
+  craftType: string;
+  quantity: number;
+  lineTotal: number;
+  completed: boolean;
+  completedAt: string | null;
+  orderCreatedAt: string;
+}

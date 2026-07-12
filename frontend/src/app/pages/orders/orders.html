@@ -1,0 +1,36 @@
+<div class="orders-page">
+  <h1>Your Orders</h1>
+
+  @if (loading()) {
+    <p>Loading your orders…</p>
+  } @else if (loaded() && orders().length === 0) {
+    <p class="empty-state-prompt">You haven't placed any orders yet.</p>
+  } @else {
+    <ul class="order-list">
+      @for (order of orders(); track order.id) {
+        <li class="order-card">
+          <div class="order-header">
+            <span class="order-status" [class]="'status-' + order.status.toLowerCase()">{{ order.status }}</span>
+            <span>{{ order.createdAt | date: 'medium' }}</span>
+          </div>
+
+          <ul class="order-items">
+            @for (item of order.items; track item.id) {
+              <li>{{ item.productName }} × {{ item.quantity }} — {{ item.lineTotal }} {{ item.priceCurrency }}</li>
+            }
+          </ul>
+
+          <div class="order-totals">
+            @for (total of order.totals; track total.currency) {
+              <span><strong>Total ({{ total.currency }}):</strong> {{ total.amount }} {{ total.currency }}</span>
+            }
+          </div>
+
+          @if (order.status === 'PLACED') {
+            <button mat-button type="button" color="warn" (click)="cancel(order)">Cancel order</button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

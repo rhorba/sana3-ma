@@ -17,8 +17,10 @@
 ├── /products/:id             (public — product detail, Sprint 2 Batch 16)
 ├── /cart                     (public — no login required, client-side only, Sprint 3 Batch 24)
 ├── /checkout                 (any authenticated role — not ARTISAN-only, Sprint 3 Batch 25)
+├── /orders                   (any authenticated role — buyer order history, Sprint 3 Batch 26)
 └── /profile                  (ARTISAN only — view/edit combined on one screen, Story 2.3)
-    └── /profile/products     (ARTISAN only — "My Products" list + add/edit, Sprint 2 Batch 15)
+    ├── /profile/products     (ARTISAN only — "My Products" list + add/edit, Sprint 2 Batch 15)
+    └── /profile/orders       (ARTISAN only — incoming orders/fulfillment queue, Sprint 3 Batch 26)
 ```
 (Sprint 1's original sketch had a separate `/profile/edit` sub-route; Story 2.3 combined view+edit into
 `/profile` itself, so that entry never existed as built — corrected here rather than left stale.)

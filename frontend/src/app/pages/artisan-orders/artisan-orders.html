@@ -1,0 +1,32 @@
+<div class="artisan-orders-page">
+  <h1>Incoming Orders</h1>
+
+  @if (loading()) {
+    <p>Loading your incoming orders…</p>
+  } @else if (loaded() && items().length === 0) {
+    <p class="empty-state-prompt">No orders for your products yet.</p>
+  } @else {
+    <ul class="item-list">
+      @for (item of items(); track item.id) {
+        <li class="item-card">
+          <div class="item-header">
+            <strong>{{ item.productName }} × {{ item.quantity }}</strong>
+            <span>{{ item.orderCreatedAt | date: 'medium' }}</span>
+          </div>
+          <span>{{ item.lineTotal }} {{ item.priceCurrency }}</span>
+
+          <div class="buyer-info">
+            <span>Buyer: {{ item.buyerEmail }}</span>
+            <span>Ship to: {{ item.shippingAddress }}</span>
+          </div>
+
+          @if (item.completed) {
+            <span class="completed-badge">Completed</span>
+          } @else {
+            <button mat-flat-button color="primary" type="button" (click)="complete(item)">Mark completed</button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

@@ -38,4 +38,76 @@ export class OrderEffects {
       map(() => CartActions.clearCart()),
     ),
   );
+
+  listMyOrders$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(OrderActions.listMyOrders),
+      switchMap(() =>
+        this.orderService.listMyOrders().pipe(
+          map((orders) => OrderActions.listMyOrdersSuccess({ orders })),
+          catchError((error) =>
+            of(
+              OrderActions.listMyOrdersFailure({
+                message: extractErrorMessage(error, "Couldn't load your orders. Please try again."),
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  cancelOrder$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(OrderActions.cancelOrder),
+      switchMap(({ id }) =>
+        this.orderService.cancelOrder(id).pipe(
+          map((order) => OrderActions.cancelOrderSuccess({ order })),
+          catchError((error) =>
+            of(
+              OrderActions.cancelOrderFailure({
+                message: extractErrorMessage(error, "Couldn't cancel this order. Please try again."),
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  listArtisanOrderItems$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(OrderActions.listArtisanOrderItems),
+      switchMap(() =>
+        this.orderService.listArtisanOrderItems().pipe(
+          map((items) => OrderActions.listArtisanOrderItemsSuccess({ items })),
+          catchError((error) =>
+            of(
+              OrderActions.listArtisanOrderItemsFailure({
+                message: extractErrorMessage(error, "Couldn't load your incoming orders. Please try again."),
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  completeArtisanOrderItem$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(OrderActions.completeArtisanOrderItem),
+      switchMap(({ id }) =>
+        this.orderService.completeArtisanOrderItem(id).pipe(
+          map((item) => OrderActions.completeArtisanOrderItemSuccess({ item })),
+          catchError((error) =>
+            of(
+              OrderActions.completeArtisanOrderItemFailure({
+                message: extractErrorMessage(error, "Couldn't mark this item completed. Please try again."),
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

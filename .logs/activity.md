@@ -738,3 +738,12 @@ was blocked locally by a Maven Central 429 rate-limit on this session's IP (30-m
 this session's own heavy `mvnw` usage across many batches) — not a security finding; deferred to Batch 28's
 CI run, which executes on a different network and isn't subject to the same local throttling.
 Full numbers in .logs/metrics.md "BATCH 27" entry. No code changes this batch — verify-only.
+
+## PUSH 2026-07-12
+Branch: main | Commits: 15 (8450d83..432c627) — Batches 21-27 (orders domain, checkout, order
+history/cancellation/artisan fulfillment, cart, checkout UI, order history UI, VERIFY).
+CI run 29202793281 triggered automatically: **all 5 jobs green on the first run** (Lint 30s, Security Scan
+1m7s, Test+Coverage Gate 1m51s, Build Docker Images 1m53s, Deploy to Staging 2s — ~4m25s total). No red-CI
+diagnose/fix cycle needed. This also resolves Batch 27's deferred item — the backend Trivy SCA scan that was
+blocked locally by a Maven Central rate-limit ran clean on CI's network (0 Critical/High), confirming the
+local block really was a network throttling artifact and not a masked finding.

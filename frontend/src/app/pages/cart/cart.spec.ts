@@ -70,6 +70,19 @@ describe('Cart', () => {
     expect(fixture.nativeElement.querySelector('.cart-totals').textContent).toContain('900');
   });
 
+  it('shows a link to checkout when the cart has items', () => {
+    store.overrideSelector(selectCartItems, [item]);
+    createComponent();
+
+    expect(fixture.nativeElement.querySelector('.checkout-link')).not.toBeNull();
+  });
+
+  it('does not show a link to checkout when the cart is empty', () => {
+    createComponent();
+
+    expect(fixture.nativeElement.querySelector('.checkout-link')).toBeNull();
+  });
+
   it('dispatches removeItem when Remove is clicked', () => {
     store.overrideSelector(selectCartItems, [item]);
     createComponent();

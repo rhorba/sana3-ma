@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { artisanGuard } from './core/auth/auth.guard';
+import { artisanGuard, authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -36,6 +36,11 @@ export const routes: Routes = [
   {
     path: 'cart',
     loadComponent: () => import('./pages/cart/cart').then((m) => m.Cart),
+  },
+  {
+    path: 'checkout',
+    loadComponent: () => import('./pages/checkout/checkout').then((m) => m.Checkout),
+    canActivate: [authGuard],
   },
   {
     path: '**',

@@ -1,0 +1,45 @@
+<div class="checkout-page">
+  <h1>Checkout</h1>
+
+  @if (placedOrder(); as order) {
+    <div class="confirmation">
+      <p>Order placed! Your order id is <strong>{{ order.id }}</strong>.</p>
+      <a routerLink="/browse">Continue shopping</a>
+    </div>
+  } @else if (items().length === 0) {
+    <p class="empty-state-prompt">Your cart is empty. <a routerLink="/browse">Browse products</a> to add some.</p>
+  } @else {
+    <ul class="review-list">
+      @for (item of items(); track item.productId) {
+        <li>
+          <span>{{ item.productName }} × {{ item.quantity }}</span>
+          <span>{{ item.priceAmount * item.quantity }} {{ item.priceCurrency }}</span>
+        </li>
+      }
+    </ul>
+
+    <div class="totals">
+      @for (total of totals(); track total.currency) {
+        <p><strong>Total ({{ total.currency }}):</strong> {{ total.amount }} {{ total.currency }}</p>
+      }
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="placeOrder()" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Shipping address</mat-label>
+        <textarea matInput formControlName="shippingAddress" rows="3"></textarea>
+        @if (form.controls.shippingAddress.invalid && form.controls.shippingAddress.touched) {
+          <mat-error>Shipping address is required</mat-error>
+        }
+      </mat-form-field>
+
+      @if (error()) {
+        <p class="error-message">{{ error() }}</p>
+      }
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="placing()">
+        {{ placing() ? 'Placing order…' : 'Place order' }}
+      </button>
+    </form>
+  }
+</div>

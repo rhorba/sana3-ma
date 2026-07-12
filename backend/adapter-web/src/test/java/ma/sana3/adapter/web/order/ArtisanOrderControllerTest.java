@@ -16,6 +16,7 @@ import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.order.ArtisanOrderItemResult;
 import ma.sana3.application.order.CompleteArtisanOrderItemHandler;
 import ma.sana3.application.order.ListArtisanOrderItemsHandler;
+import ma.sana3.application.order.OrderCancelledException;
 import ma.sana3.application.order.OrderItemNotFoundException;
 import ma.sana3.domain.order.OrderItemAlreadyCompletedException;
 import ma.sana3.domain.order.OrderStatus;
@@ -134,5 +135,19 @@ class ArtisanOrderControllerTest {
                 .with(asArtisan(userId)))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.error.code").value("ORDER_ITEM_ALREADY_COMPLETED"));
+  }
+
+  @Test
+  void completeRejectsAnItemOnACancelledOrder() throws Exception {
+    UUID userId = UUID.randomUUID();
+    when(completeArtisanOrderItemHandler.handle(any())).thenThrow(new OrderCancelledException());
+
+    mockMvc
+        .perform(
+            post("/api/v1/artisan-profiles/me/orders/" + UUID.randomUUID() + "/complete")
+                .with(csrf())
+                .with(asArtisan(userId)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error.code").value("ORDER_CANCELLED"));
   }
 }

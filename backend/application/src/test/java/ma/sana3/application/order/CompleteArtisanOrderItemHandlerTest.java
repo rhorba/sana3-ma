@@ -108,9 +108,10 @@ class CompleteArtisanOrderItemHandlerTest {
   void rejectsAnAlreadyCompletedItem() {
     UUID userId = UUID.randomUUID();
     ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    Order order = Order.place(UUID.randomUUID(), "Address");
     OrderItem completed =
         OrderItem.create(
-                UUID.randomUUID(),
+                order.id(),
                 UUID.randomUUID(),
                 "Tile",
                 new BigDecimal("10.00"),
@@ -121,12 +122,37 @@ class CompleteArtisanOrderItemHandlerTest {
             .complete();
     when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
     when(orderItemRepository.findById(completed.id())).thenReturn(Optional.of(completed));
+    when(orderRepository.findById(order.id())).thenReturn(Optional.of(order));
 
     assertThrows(
         OrderItemAlreadyCompletedException.class,
         () ->
             handler.handle(
                 new CompleteArtisanOrderItemCommand(userId, Role.ARTISAN, completed.id())));
+  }
+
+  @Test
+  void rejectsCompletingAnItemOnACancelledOrder() {
+    UUID userId = UUID.randomUUID();
+    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    Order cancelled = Order.place(UUID.randomUUID(), "Address").cancel();
+    OrderItem item =
+        OrderItem.create(
+            cancelled.id(),
+            UUID.randomUUID(),
+            "Tile",
+            new BigDecimal("10.00"),
+            "MAD",
+            "Pottery",
+            profile.id(),
+            1);
+    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(orderItemRepository.findById(item.id())).thenReturn(Optional.of(item));
+    when(orderRepository.findById(cancelled.id())).thenReturn(Optional.of(cancelled));
+
+    assertThrows(
+        OrderCancelledException.class,
+        () -> handler.handle(new CompleteArtisanOrderItemCommand(userId, Role.ARTISAN, item.id())));
   }
 
   @Test

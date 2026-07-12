@@ -5,6 +5,7 @@ import ma.sana3.adapter.web.auth.ApiError;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.artisanprofile.ProfileNotFoundException;
 import ma.sana3.application.catalog.ProductNotFoundException;
+import ma.sana3.application.order.OrderCancelledException;
 import ma.sana3.application.order.OrderHasCompletedItemsException;
 import ma.sana3.application.order.OrderItemNotFoundException;
 import ma.sana3.application.order.OrderNotFoundException;
@@ -67,6 +68,12 @@ class OrderExceptionHandler {
   ResponseEntity<ApiError> handleOrderHasCompletedItems(OrderHasCompletedItemsException exception) {
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(new ApiError("ORDER_HAS_COMPLETED_ITEMS", exception.getMessage()));
+  }
+
+  @ExceptionHandler(OrderCancelledException.class)
+  ResponseEntity<ApiError> handleOrderCancelled(OrderCancelledException exception) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ApiError("ORDER_CANCELLED", exception.getMessage()));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

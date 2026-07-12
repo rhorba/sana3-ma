@@ -59,3 +59,36 @@ batch (contrast with Sprint 1 Batch 8, which found and fixed 3 real issues) — 
 upload, public browsing) was already scanned incidentally as each batch shipped it, and B14's `apk upgrade
 --no-cache` pattern kept both images' base packages current throughout.
 
+## BATCH 27 2026-07-12 — Coverage + security scan (Sprint 3 VERIFY gate)
+
+### Coverage (JaCoCo + Vitest via `ng test --coverage --coverage-reporters json-summary --coverage-reporters text`)
+| Scope | Line coverage |
+|---|---|
+| Backend combined (5 modules) | 1278/1372 lines |
+| Frontend (26 spec files, 165 tests) | 755/859 lines (87.9%) |
+| **Combined backend + frontend** | **91.1%** (2033/2231 lines) |
+
+Gate: ≥80% combined — **PASS**, via `scripts/check-coverage.sh` (unchanged since Sprint 1 Batch 9). Note:
+`ng test --coverage` alone (without the explicit `--coverage-reporters json-summary` flag CI/this script
+expect) only emits `coverage-final.json`, not `coverage-summary.json` — the script silently excludes
+frontend coverage and still reports a misleadingly-passing backend-only number in that case. Re-ran with the
+exact flags from `.github/workflows/ci.yml` to get the real combined figure above.
+
+### Security scan
+| Scanner | Scope | Result |
+|---|---|---|
+| Semgrep (auto ruleset, 384 rules, 267 files) | backend/, frontend/src | **0 findings** |
+| Trivy SCA (fs) | backend Maven modules | **blocked locally** — Maven Central 429 rate-limited this session's IP (30 min) after this session's heavy `mvnw` usage; not a security finding. CI (Batch 28) runs on a different network and will confirm cleanly. |
+| Trivy SCA (fs) | frontend npm (package-lock.json) | **0** Critical/High |
+| Trivy SCA (fs) | e2e npm | no supported manifest found locally (same as CI's scope — e2e/ isn't a separate SCA job in ci.yml) |
+| Trivy image scan | sana3-ma-backend:verify | **0** (alpine 3.23.5, 1 jar, apk upgrade pattern still holding) |
+| Trivy image scan | sana3-ma-frontend:verify | **0** (alpine 3.23.5) |
+| Gitleaks | full git history (55 commits) | **0** secrets found |
+
+Gate: no Critical findings — **PASS** on every scanner that could run locally; the one scanner blocked by a
+local network condition (not a code issue) is deferred to CI's clean-IP run in Batch 28. Sprint 3's new
+attack surface (checkout, order placement, cancellation, artisan fulfillment with buyer PII exposure) was
+already reasoned through and documented in `docs/security-sana3-ma.md` as each batch shipped it (Batches
+21-26), consistent with the "scan incidentally as you go" practice that made Sprint 2's Batch 18 clean on
+the first pass.
+

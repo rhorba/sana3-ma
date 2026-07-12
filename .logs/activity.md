@@ -723,3 +723,18 @@ order_items with correct buyer/shipping info, completes one (200, badge appears)
 completion gap found and re-verified as above.
 Document-first update: docs/ux-sana3-ma.md site map.
 Committed as 96b4607 (backend fix) and b24fe0b (frontend feature).
+
+## BATCH 27 2026-07-12 — VERIFY: coverage + security scan (Sprint 3)
+Combined backend+frontend line coverage 91.1% (`scripts/check-coverage.sh`, unchanged since Sprint 1 Batch
+9) — comfortably clears the 80% gate. Caught a reporting gotcha while measuring it: `ng test --coverage`
+without the exact `--coverage-reporters json-summary --coverage-reporters text` flags `ci.yml` uses only
+writes `coverage-final.json`, not the `coverage-summary.json` the check script reads — it fails silently
+(a WARNING, not an error) and reports a backend-only number that still happens to clear 80%, which could
+mask a real frontend regression in a less comfortable scenario. Re-ran with CI's exact invocation to get the
+real figure; no script change needed, just noted for next time.
+Security scan: Semgrep (0 findings), Gitleaks (0 secrets, 55 commits), Trivy SCA on frontend npm (0
+Critical/High), Trivy image scans on both freshly-built images (0 Critical). Backend Maven SCA (Trivy fs)
+was blocked locally by a Maven Central 429 rate-limit on this session's IP (30-minute block, triggered by
+this session's own heavy `mvnw` usage across many batches) — not a security finding; deferred to Batch 28's
+CI run, which executes on a different network and isn't subject to the same local throttling.
+Full numbers in .logs/metrics.md "BATCH 27" entry. No code changes this batch — verify-only.

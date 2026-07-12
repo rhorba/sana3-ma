@@ -633,3 +633,35 @@ Document-first updates: docs/architecture-sana3-ma.md (API table), docs/database
 now that shipping_address/buyer email are intentionally artisan-visible), docs/security-sana3-ma.md (new
 artisan-fulfillment PII section).
 Committed as 36248ca.
+
+## BATCH 24 2026-07-12 — cart NgRx slice + UI, localStorage-backed (Story 5.1)
+New client-only `cart` feature slice, no backend endpoint (Assumed Default #1) — addItem/updateQuantity/
+removeItem/clearCart, each entry snapshotting the product as shown at add-to-cart time so the cart still
+renders sensibly if a product changes or is deleted before checkout; adding an already-present product
+merges quantity instead of duplicating the row. `selectCartTotalsByCurrency` mirrors the backend's
+per-currency order totals (Batch 22's `OrderTotal` grouping), not a single blended total. Persistence via a
+`cartLocalStorageMetaReducer` registered on `provideStore`'s `metaReducers`, hydrating the cart slice from
+localStorage on the first dispatch and writing it back after every change.
+New `/cart` route (quantity edit, remove, per-currency totals, empty-state prompt). "Add to Cart" wired
+into `/browse` (fixed quantity 1 per card) and `/products/:id` (quantity field). Toolbar gained a Cart link
+with a live item-count badge.
+Real bug found during live testing (not caught by unit tests, which mocked the reducer boundary rather
+than exercising NgRx's real init sequence), fixed same-session: the meta-reducer's hydration guard was
+`state && { ...state, [cartFeatureKey]: readFromStorage() }`, but NgRx calls the root reducer with
+`state: undefined` on its very first-ever dispatch — `undefined && ...` short-circuits to `undefined`, so
+hydration silently never applied, and the reducer's own empty default got written straight back over
+whatever was actually in localStorage. Fixed by running the wrapped reducer first (always returns a
+fully-defaulted state) and overriding just the cart slice on that result. Caught by manually driving the
+running dev-server app rather than trusting the unit tests alone — browser-automation clicks (via
+coordinates or accessibility refs) intermittently failed to register with Angular's click bindings during
+this session (a tooling limitation noted before, e.g. Batch 16's "coordinate flakiness"), so verification
+used direct DOM `.click()`/`dispatchEvent` calls via the JS console instead, which reproduced the bug
+reliably: add item -> full reload -> item silently vanished. Re-verified after the fix: add -> full reload
+-> item persists; remove -> full reload -> empty state persists; adding the same product twice merges into
+one row at quantity 2, and that merged state also survives a reload.
+Existing `cart.storage.spec.ts` tests were updated to call the meta-reducer with `state: undefined` on the
+first dispatch (matching NgRx's real bootstrap behavior) rather than a pre-populated state object, which is
+what let the original bug slip past the test suite in the first place.
+121 frontend tests (was 101), build/lint/test all clean.
+Document-first update: docs/ux-sana3-ma.md site map.
+Committed as 7921cb8.

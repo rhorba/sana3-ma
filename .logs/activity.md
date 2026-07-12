@@ -665,3 +665,33 @@ what let the original bug slip past the test suite in the first place.
 121 frontend tests (was 101), build/lint/test all clean.
 Document-first update: docs/ux-sana3-ma.md site map.
 Committed as 7921cb8.
+
+## BATCH 25 2026-07-12 — checkout UI: review, place order, confirmation (Story 5.3)
+New `/checkout` route guarded by a new generic `authGuard` (any authenticated role — Assumed Default #3),
+distinct from the existing ARTISAN-only `artisanGuard`. New `order` NgRx feature slice scoped to just this
+batch's need (`placeOrder`) — list-my-orders is deferred to Batch 26 (Story 6.1) rather than built ahead of
+the story that needs it, the same incremental-slice pattern Sprint 2 used for `catalog` across Batches 15-16.
+`OrderEffects.placeOrder$` posts the cart's current items (mapped to `productId`/`quantity` only — price and
+name are never sent, matching Batch 22's server-side-recompute contract) to `POST /api/v1/orders`. A
+separate `clearCartOnPlaceOrderSuccess$` effect dispatches `CartActions.clearCart()` only after a real
+success, so a per-line rejection (Story 5.2's `PRODUCT_NOT_FOUND`) leaves the cart untouched for the buyer
+to fix and retry.
+Checkout page: review list + per-currency totals + shipping address form; on success shows a confirmation
+with the order id in place of the form; dispatches `OrderActions.resetPlaceOrderState()` on mount so a stale
+confirmation/error from a previous visit never leaks into a fresh cart's checkout. Cart page gained the
+"Proceed to Checkout" link deferred from Batch 24.
+19 new/changed frontend tests (order reducer, order effects incl. the cart-clearing effect, checkout
+component, authGuard, cart's new checkout link), build/lint/test all clean.
+VERIFY note: browser-automation flakiness continued this session (see Batch 24) — the first browser tab
+became entirely unresponsive mid-login (CDP calls timing out) for reasons unrelated to the app; opened a
+fresh tab and continued there without issue, consistent with a tooling problem rather than an app bug.
+Full live verification against the dockerized stack in the fresh tab: logged in as a real buyer, added a
+product to cart, checked out, got a real confirmation with an order id, confirmed the cart cleared in both
+the NgRx store and localStorage, and independently verified the placed order via
+`GET /api/v1/orders/me/{id}`. Then specifically tested the per-line-rejection AC: added a product to cart,
+deleted that product from the backend (simulating "changed since it was added to the cart"), submitted
+checkout, and confirmed the backend's exact message ("No product found for id ...") rendered on the page
+instead of a generic failure, with the cart left untouched afterward. Also confirmed an unauthenticated
+visit to `/checkout` redirects to `/login?returnUrl=%2Fcheckout`.
+Document-first update: docs/ux-sana3-ma.md site map.
+Committed as a22bfe5.

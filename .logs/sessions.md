@@ -360,3 +360,20 @@ as blocked on some future feature actually populating `artisan_profiles.location
 "Out of Scope (future sprints)" list, the remaining backlog is: orders/checkout/payment, QR-authenticated
 craft certificates, DHL export integration, cooperative multi-user accounts — Sprint 3 planning starts fresh
 with the user (UNDERSTAND/BRAINSTORM/PLAN), same as how Sprint 2 started.
+
+## SESSION_END 2026-07-13 — Sprint 3 complete (Batches 21-29)
+Full batch-by-batch detail in .logs/activity.md ("BATCH 21" through "BATCH 29", plus "RETRO 2026-07-13").
+Summary: shipped the full order lifecycle (cart, checkout, order history, cancellation, artisan
+fulfillment) — Epics 5-6 complete, nothing cut from docs/stories-sana3-ma-sprint3.md. Two real backend
+correctness gaps found via live smoke-testing and fixed same-session (cross-cancel/cross-complete guards,
+Batches 23 and 26). Coverage 91.1%, security scan clean, CI green on the first run every batch, E2E suite
+(critical-flows + catalog-flows + order-flows) all green together. Video recorded to
+`.recordings/v0.3-2026-07-13.webm` (local only). Closed a process gap: docs/test-strategy-sana3-ma.md's
+release gate checklist had gone stale since Sprint 1 and wasn't re-touched during Sprint 2 — fixed now with
+Sprint 3 evidence.
+
+Next session: no predetermined Sprint 4 plan exists. Remaining PRD "Out of Scope (future sprints)" backlog:
+real CMI/Stripe payment gateway integration (deliberately split out of Sprint 3, see its Assumed Default
+#4), QR-authenticated craft certificates, DHL export integration, cooperative multi-user accounts.
+Geo-radius search ("artisans near me") still carried from Sprint 2, still blocked on nothing populating
+`artisan_profiles.location`. Sprint 4 planning starts fresh with the user (UNDERSTAND/BRAINSTORM/PLAN).

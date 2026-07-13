@@ -747,3 +747,61 @@ CI run 29202793281 triggered automatically: **all 5 jobs green on the first run*
 diagnose/fix cycle needed. This also resolves Batch 27's deferred item — the backend Trivy SCA scan that was
 blocked locally by a Maven Central rate-limit ran clean on CI's network (0 Critical/High), confirming the
 local block really was a network throttling artifact and not a masked finding.
+
+## BATCH 29 2026-07-13 — SHIP: Sprint 3 E2E suite + video recording (rule 9)
+New `e2e/tests/order-flows.spec.ts`, one continuous Playwright session covering Stories 5.1-5.3 and
+6.1-6.5: add-to-cart with a chosen quantity, cart quantity edit, checkout + confirmation with a real order
+id and cart clearing, buyer order history + cancel, a second order to drive the fulfillment step, cart
+surviving a logout/login (proves it's client-side/localStorage-backed, not session-bound — Batch 24), a
+per-line rejection at checkout (product deleted after being added to cart) rendering the backend's exact
+message (Batch 25's AC), and artisan fulfillment (buyer email + shipping address visible per Batch 23's
+intentional PII exposure, mark completed).
+Two real bugs found in the test itself (not the app) while getting it green against the dockerized stack:
+a login not awaited before the next step's `page.goto()` aborted the in-flight silent-refresh request
+(access token is memory-only by design per docs/security-sana3-ma.md, so every full navigation re-runs
+bootstrap auth — navigating away mid-request left the buyer unauthenticated for the next step); and a
+duplicate-toast strict-mode violation asserting on the transient "Product added" snackbar twice in a row
+while the first was still closing — fixed by asserting on the resulting product card for the second add.
+Also fixed Sprint 2's `catalog-flows.spec.ts`, which had started failing for an unrelated reason: this
+session's accumulated test data means `/browse`'s default page no longer reliably contains a
+freshly-created product. Filtered by the run-unique product name via the existing Search field, same
+pattern now used in `order-flows.spec.ts`.
+Verified: `order-flows.spec.ts` passes alone, and all three e2e specs (critical-flows, catalog-flows,
+order-flows) pass together with no cross-sprint regressions. Video saved to
+`.recordings/v0.3-2026-07-13.webm` (gitignored, local only, per rule 9 and the existing binary-artifacts
+convention).
+Document-first: updated docs/test-strategy-sana3-ma.md's release gate checklist with Sprint 3 evidence
+(coverage 91.1%, CI run 29202793281, this batch's recording) — noted as a retroactive fix that Sprint 2
+shipped without this checklist being re-touched at the time; closed the gap rather than leaving it stale.
+Committed as 19438b3.
+
+## RETRO 2026-07-13 — Sprint 3 complete (Batches 21-29)
+Shipped: full order lifecycle — client-side cart (Story 5.1), checkout/place-order with server-side price
+recompute (5.2), checkout UI (5.3), buyer order history + cancellation (6.1/6.2/6.4), artisan order
+visibility + fulfillment with intentional buyer PII exposure (6.3/6.5). Epics 5-6 complete, nothing cut
+from docs/stories-sana3-ma-sprint3.md's planned backlog. Payment gateway integration explicitly stayed out
+of scope per the sprint's own scope-boundary note (Assumed Default #4) — orders ship as PLACED with no
+payment step, equivalent to cash-on-delivery.
+What deviated from plan: two backend correctness gaps were found only via live smoke-testing, not unit
+tests, and fixed same-session after flagging to the user rather than silently deciding — Batch 23's
+cancel-guard (a buyer could cancel an order after an artisan had completed one of its items) and Batch 26's
+symmetric gap (an artisan could complete an item on an order the buyer had already cancelled). Both are now
+guarded server-side with explicit 409s (`ORDER_HAS_COMPLETED_ITEMS`, `ORDER_CANCELLED`).
+What went well: the incremental-NgRx-slice pattern from Sprint 2 (build only what the current story needs)
+carried over cleanly across cart -> checkout -> order-history; continuous security reasoning per-batch again
+left Batch 27's scan clean (0 findings) with no fix cycle. A real hydration bug in the cart's localStorage
+meta-reducer (Batch 24 — `undefined && ...` short-circuiting on NgRx's real first dispatch) was caught only
+by manually driving the running app, not the unit tests that had mocked the reducer boundary; the test was
+then fixed to match NgRx's real bootstrap behavior so it can't regress silently again.
+Process gap found and closed this batch: docs/test-strategy-sana3-ma.md's release gate checklist was last
+touched at Sprint 1 Batch 10 and never re-verified during Sprint 2's SHIP — Sprint 2 shipped correctly (own
+evidence exists in .logs/metrics.md and .recordings/) but the doc itself went stale. Updated now with
+Sprint 3 evidence and a note explaining the gap; worth remembering to re-touch this doc every sprint's SHIP
+going forward, not just Sprint 1's.
+Carried forward: no open Sprint 3 stories. Remaining PRD "Out of Scope (future sprints)" backlog: real
+CMI/Stripe payment gateway integration (explicitly split out of this sprint, see Assumed Default #4),
+QR-authenticated craft certificates, DHL export integration, cooperative multi-user accounts. Geo-radius
+search ("artisans near me") also still carried from Sprint 2, still blocked on nothing populating
+`artisan_profiles.location`.
+Coverage 91.1%, security scan clean (0 Critical/High across Semgrep/Trivy/Gitleaks), CI green on the first
+run for every batch this sprint (Batches 21-28), E2E all three specs green together.

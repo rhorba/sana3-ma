@@ -52,7 +52,11 @@ test('catalog critical user flows', async ({ page }) => {
   });
 
   await test.step('The product is publicly browsable and filterable', async () => {
+    // A shared local dev database accumulates products across sessions, so /browse can span
+    // multiple pages — search by the run-unique name instead of assuming page 1.
     await page.goto('/browse');
+    await page.getByLabel('Search').fill(productName);
+    await page.getByRole('button', { name: 'Search' }).click();
     await expect(page.locator('.product-card', { hasText: productName })).toBeVisible();
 
     await page.getByLabel('Craft type').fill('nonexistent-craft-type');

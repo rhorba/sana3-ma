@@ -949,4 +949,4 @@ Document-first updates: docs/database-sana3-ma.md (V7 migration row, index, acce
 docs/security-sana3-ma.md §4 (superseded the stale "profile.userId == authenticatedUser.id" line from
 Sprint 1 with the membership-based model, added the OWNER/MEMBER permission-tier note) and §5 (new PII
 consideration: members list exposes peer emails; invite-creation enumeration-safety note).
-Committed as (pending).
+Committed as 7516eb1.

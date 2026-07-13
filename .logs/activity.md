@@ -805,3 +805,10 @@ search ("artisans near me") also still carried from Sprint 2, still blocked on n
 `artisan_profiles.location`.
 Coverage 91.1%, security scan clean (0 Critical/High across Semgrep/Trivy/Gitleaks), CI green on the first
 run for every batch this sprint (Batches 21-28), E2E all three specs green together.
+
+## PUSH 2026-07-13
+Branch: main | Commit: 901fe19 (Batch 29 logs — E2E suite, retro, session end, test-strategy checklist
+update). CI run 29247751687 triggered automatically: **all 5 jobs green on the first run** (Lint 25s,
+Security Scan 48s, Test+Coverage Gate 1m58s, Build Docker Images 1m56s, Deploy to Staging 2s). Sprint 3
+fully closed out: all batches shipped, CI green, coverage 91.1%, zero open critical/high security findings,
+E2E suite (3 specs) green together, video recorded.

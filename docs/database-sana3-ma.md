@@ -124,6 +124,7 @@ moved to a table that allows many rows per `artisan_profile_id`. Backfilled from
 | order_items | idx_order_items_order_id | (order_id) | line items for one order |
 | order_items | idx_order_items_artisan_profile_id | (artisan_profile_id) | artisan's fulfillment queue across all orders |
 | cooperative_members | idx_cooperative_members_artisan_profile_id | (artisan_profile_id) | list all members of a cooperative (user_id lookup covered by its UNIQUE constraint) |
+| cooperative_invites | idx_cooperative_invites_invited_user_id | (invited_user_id) | an invitee's own pending invites |
 
 Public browsing/search (Batch 13) currently runs an unindexed `LOWER(craft_type)`/`LOWER(region)` filter
 and a `LIKE '%...%'` scan on `name`/`description` — acceptable at sprint-2 data volumes (no test/staging
@@ -140,6 +141,7 @@ case-insensitive index on `products.craft_type` and `artisan_profiles.region`, a
 | V4__create_orders.sql | Create `orders` + `order_items` tables, snapshot columns, FK to `products` (ON DELETE SET NULL) | Yes (DROP TABLE) |
 | V5__create_cooperative_members.sql | Create `cooperative_members` table, backfill from existing `artisan_profiles` owners | Yes (DROP TABLE) |
 | V6__drop_artisan_profiles_user_id.sql (Batch 31) | Drop `artisan_profiles.user_id` now that `cooperative_members` is the sole ownership source | No (would need to reconstruct from `cooperative_members` OWNER rows) |
+| V7__create_cooperative_invites.sql (Batch 32) | Create `cooperative_invites` table (invite/accept/decline lifecycle) | Yes (DROP TABLE) |
 
 ## 6. Access Patterns
 | Use Case | Query Pattern | Index Coverage |

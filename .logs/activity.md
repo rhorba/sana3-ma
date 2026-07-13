@@ -913,3 +913,40 @@ product -> list own products, all against the running API; confirmed via direct 
 Document-first update: docs/database-sana3-ma.md already anticipated V6 in Batch 30's entry; no further
 doc changes needed this batch.
 Committed as a245aba.
+
+## BATCH 32 2026-07-13 — invites: create/list/accept/decline, list/remove members (Story 7.3)
+New `cooperative_invites` table (Flyway V7) + `CooperativeInvite` domain entity mirroring `Order`'s
+status-transition pattern (`accept()`/`decline()` guard against a non-PENDING invite, throwing
+`IllegalInviteStatusTransitionException` — same shape as `IllegalOrderStatusTransitionException`).
+Six new handlers in `application.artisanprofile`: `InviteMemberHandler` (OWNER-only; validates the invitee
+is an existing ARTISAN account, isn't already a member, and doesn't already have a pending invite —
+enforcing Assumed Default #4's "accept required" design and the security note's enumeration-safety
+requirement by using one shared `InviteeNotEligibleException` for both "no such user" and "not an artisan"),
+`ListMyInvitesHandler`, `AcceptInviteHandler` (creates the MEMBER `CooperativeMembership` in the same call —
+mirrors how `UpdateArtisanProfileHandler` creates the OWNER membership on first profile save), `DeclineInviteHandler`,
+`ListMembersHandler` (batch-fetches member emails via `UserRepository.findByIds`, same N+1-avoidance pattern
+as Sprint 2/3's artisan/buyer batch-fetches), `RemoveMemberHandler` (one handler covers both Story 7.3 AC
+cases — a MEMBER removing themselves, or an OWNER removing any MEMBER — via a single
+`isSelfRemoval || requester.isOwner()` check; an OWNER can never be removed by anyone, self included, per
+Assumed Default #5).
+New web layer: `CooperativeMemberController` (`/api/v1/artisan-profiles/me/members` — GET list, POST
+`/invites`, DELETE `/{userId}`) and `CooperativeInviteController` (`/api/v1/cooperative-invites/me` — GET
+list, POST `/{id}/accept`, POST `/{id}/decline`, matching Story 7.3's Technical Notes literally), plus a
+`CooperativeExceptionHandler` mapping 7 new exceptions to the right HTTP status (409 for the two
+already-X conflicts and the illegal-transition/cannot-remove-owner cases, 404 for not-found, 403 for
+not-owner, 400 for the ineligible-invitee case).
+35 new tests (2 domain, 21 application across 6 handler suites, 4 persistence incl. Testcontainers, 11 web
+MockMvc across 2 controllers) — all green, full `mvn verify` green across all 5 backend modules.
+VERIFY: full live smoke test against the rebuilt dockerized stack (Flyway migrated a real running database
+straight to v7, no incident). Exercised the complete flow with two real registered users: owner creates
+profile -> invites member's email -> member sees the pending invite -> accepts -> members list shows both
+with correct roles -> member creates a product on the shared profile -> owner sees that same product
+(confirms Batch 31's equal-access rework holds for a real second user, not just the original owner).
+Negative-path checks against the live API: member attempting to remove the owner correctly gets 409
+CANNOT_REMOVE_OWNER; owner removing the member correctly gets 204; re-inviting that same email afterward
+correctly succeeds with a fresh PENDING invite (proves removal doesn't leave a stale pending-invite block).
+Document-first updates: docs/database-sana3-ma.md (V7 migration row, index, access pattern), and
+docs/security-sana3-ma.md §4 (superseded the stale "profile.userId == authenticatedUser.id" line from
+Sprint 1 with the membership-based model, added the OWNER/MEMBER permission-tier note) and §5 (new PII
+consideration: members list exposes peer emails; invite-creation enumeration-safety note).
+Committed as (pending).

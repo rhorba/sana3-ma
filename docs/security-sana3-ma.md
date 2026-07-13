@@ -26,7 +26,17 @@
 ## 4. Authorization Model
 - **Pattern**: Simple RBAC
 - **Roles defined**: BUYER, ARTISAN, ADMIN (ADMIN unused this sprint, reserved for moderation later)
-- **Resource-level checks**: Yes — artisan profile endpoints check `profile.userId == authenticatedUser.id`
+- **Resource-level checks (Sprint 1-3)**: artisan profile endpoints checked `profile.userId ==
+  authenticatedUser.id` — a hard 1:1, one user per profile.
+- **Resource-level checks (Sprint 4, Batch 31)**: superseded by cooperative membership. Every artisan-only
+  endpoint now resolves `cooperative_members.artisan_profile_id` for the authenticated user and compares
+  that against the resource, not a direct user-id match — the same check shape, just one level of
+  indirection added so multiple users can share one profile. `artisan_profiles.user_id` no longer exists
+  (dropped in the same batch); membership is the sole ownership source now.
+- **Two-tier permission within a cooperative (Batch 32)**: OWNER (auto-assigned to whoever creates the
+  profile) can invite/remove members; both OWNER and MEMBER have equal access to manage products, orders,
+  and shared profile fields — no finer-grained permission matrix (see
+  docs/stories-sana3-ma-sprint4.md Assumed Default #3).
 
 ## 5. Data Protection
 - **PII fields**: email, phone, contact address (artisan profile)
@@ -53,6 +63,15 @@
   profile (never another artisan's lines on a multi-artisan order, and never the buyer's `contactPhone`,
   which doesn't exist on a BUYER-role user record). `POST .../{id}/complete` has the same ownership check
   before allowing a status change.
+- **Cooperative membership PII (Sprint 4, Batch 32)**: `GET /api/v1/artisan-profiles/me/members` exposes
+  each member's `email` to every other member of the same cooperative — new cross-user visibility that
+  didn't exist before Sprint 4 (previously no user could see another user's email except an artisan
+  fulfilling that specific buyer's order, per Batch 23 above). Intentional and proportionate — people who
+  jointly run a shop reasonably know who else has access to it — but a real PII exposure, not an oversight.
+  Invite creation (`POST .../members/invites`) is a minor enumeration surface: the handler returns the same
+  `INVITEE_NOT_ELIGIBLE` error whether the email doesn't exist at all or exists but isn't an ARTISAN account,
+  rather than distinguishing the two, so an inviter can't use it to probe arbitrary emails for account
+  existence/role.
 - **Encryption at rest**: Postgres volume encryption deferred to hosting provider (Docker Compose dev = not encrypted; note for staging/prod hosting choice)
 - **Encryption in transit**: HTTPS enforced in staging/prod (local Docker Compose may run HTTP for simplicity, documented as dev-only)
 - **Secrets management**: env vars via `.env` (git-ignored), dev-safe defaults in `.env.example`, real secrets injected via CI/CD secrets store at deploy time — never committed

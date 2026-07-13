@@ -912,4 +912,4 @@ product -> list own products, all against the running API; confirmed via direct 
 `artisan_profiles.user_id` is genuinely gone from the live schema.
 Document-first update: docs/database-sana3-ma.md already anticipated V6 in Batch 30's entry; no further
 doc changes needed this batch.
-Committed as (pending).
+Committed as a245aba.

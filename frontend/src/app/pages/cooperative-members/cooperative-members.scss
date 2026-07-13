@@ -1,0 +1,40 @@
+.members-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.invite-form {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.empty-state-prompt {
+  color: var(--mat-sys-primary);
+  font-weight: 500;
+}
+
+.member-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.member-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.role-badge {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+}

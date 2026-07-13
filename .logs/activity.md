@@ -950,3 +950,36 @@ docs/security-sana3-ma.md §4 (superseded the stale "profile.userId == authentic
 Sprint 1 with the membership-based model, added the OWNER/MEMBER permission-tier note) and §5 (new PII
 consideration: members list exposes peer emails; invite-creation enumeration-safety note).
 Committed as 7516eb1.
+
+## BATCH 33 2026-07-13 — frontend cooperative NgRx slice + members UI (Story 7.4)
+New `cooperative` NgRx feature slice (state/actions/reducer/selectors/effects) mirroring every prior
+sprint's incremental-slice pattern — built only for what this story needs (members list, invite, remove,
+my-invites, accept/decline), same shape as `order`'s Batch 25/26 growth. `CooperativeService` wraps the six
+Batch 32 endpoints. `reloadMembersAfterInvite$` effect re-fetches the members list after a successful invite
+so a freshly-sent invite doesn't require a manual page refresh to reflect state (there's nothing to show
+yet since the invite is pending, but this keeps the list authoritative rather than optimistically patching it).
+New `/profile/members` route (existing `artisanGuard`) + `CooperativeMembers` page: invite form visible only
+to the OWNER (`isOwner` computed by finding the current user's own row in the members list — no separate
+"am I owner" endpoint needed), a Remove/Leave action gated by `canRemove()` (owner can remove any MEMBER,
+a MEMBER can remove themselves, nobody can act on the OWNER row) — mirrors Batch 32's backend
+`RemoveMemberHandler` logic exactly at the UI layer.
+Pending-invite banner (Story 7.4's AC — "somewhere they'll actually notice it, not buried in a settings
+page") lives in the root `App` component, not the members page: an `effect()` dispatches `loadMyInvites`
+whenever an authenticated ARTISAN session is active, and a banner renders above `<router-outlet>` on every
+page with inline Accept/Decline buttons. This is the same "surface it globally, not on a dedicated route"
+choice Sprint 3 made for snackbar errors.
+Fixed a stale field left by Batch 31's backend change: `ArtisanProfileResponse.userId` (and the
+corresponding NgRx state field) no longer exists in the API response — removed from
+`artisan-profile.models.ts`, `artisan-profile.state.ts`, `artisan-profile.reducer.ts`, and their three spec
+fixtures. This was a loose end from the backend batch, not new Sprint 4 UI work, closed out here since B33
+is the first frontend batch to touch this slice since the backend change.
+34 new/changed frontend tests (11 reducer, 10 effects incl. HTTP error-message mapping, 7 page component,
+2 app-shell banner, 4 fixed artisan-profile spec files) — 192 total frontend tests, all green. Lint and
+production build both clean (new `cooperative-members` lazy chunk, 4.74 kB).
+VERIFY: full live browser test against the rebuilt dockerized stack, not just unit tests — registered two
+real users via direct API calls, then drove the actual Angular UI: owner's `/profile/members` page correctly
+showed the invite form and the OWNER row with no remove action; logged in as the invitee and confirmed the
+pending-invite banner rendered on the very first page after login ("UI Test Coop invited you to join." with
+working Accept/Decline buttons); clicked Accept; confirmed `/profile/members` now lists both users with
+correct roles and only the MEMBER row has a "Leave" action, matching Batch 32's backend rules exactly.
+Committed as (pending).

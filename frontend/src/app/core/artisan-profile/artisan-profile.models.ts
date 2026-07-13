@@ -8,7 +8,6 @@ export interface UpsertArtisanProfileRequest {
 
 export interface ArtisanProfileResponse {
   id: string;
-  userId: string;
   displayName: string;
   craftType: string;
   region: string | null;

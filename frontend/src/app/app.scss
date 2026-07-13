@@ -2,6 +2,15 @@
   flex: 1 1 auto;
 }
 
+.invite-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
 main {
   padding: 1.5rem;
 }

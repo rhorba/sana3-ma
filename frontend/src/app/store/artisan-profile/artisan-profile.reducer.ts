@@ -18,7 +18,6 @@ export const artisanProfileFeature = createFeature({
       (state, { response }): ArtisanProfileState => ({
         ...state,
         id: response.id,
-        userId: response.userId,
         displayName: response.displayName,
         craftType: response.craftType,
         region: response.region,

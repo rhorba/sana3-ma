@@ -5,7 +5,6 @@ import { ArtisanProfileState, initialArtisanProfileState } from './artisan-profi
 describe('artisanProfileReducer', () => {
   const response = {
     id: 'profile-1',
-    userId: 'user-1',
     displayName: 'Yassine Zellige',
     craftType: 'Zellige tiling',
     region: 'Fes',
@@ -30,7 +29,6 @@ describe('artisanProfileReducer', () => {
     const state = artisanProfileReducer(initialArtisanProfileState, ArtisanProfileActions.loadProfileSuccess({ response }));
     expect(state).toEqual({
       id: response.id,
-      userId: response.userId,
       displayName: response.displayName,
       craftType: response.craftType,
       region: response.region,

@@ -1,0 +1,34 @@
+<div class="members-page">
+  <h1>Cooperative Members</h1>
+
+  @if (isOwner()) {
+    <form class="invite-form" [formGroup]="inviteForm" (ngSubmit)="invite()">
+      <mat-form-field appearance="outline">
+        <mat-label>Invite an artisan by email</mat-label>
+        <input matInput type="email" formControlName="email" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="submit" [disabled]="inviteSending()">Send Invite</button>
+    </form>
+  }
+
+  @if (loading()) {
+    <p>Loading members…</p>
+  } @else if (loaded() && members().length === 0) {
+    <p class="empty-state-prompt">No members yet.</p>
+  } @else {
+    <ul class="member-list">
+      @for (member of members(); track member.userId) {
+        <li class="member-card">
+          <span>{{ member.email }}</span>
+          <span class="role-badge">{{ member.role }}</span>
+          <span>Joined {{ member.joinedAt | date: 'mediumDate' }}</span>
+          @if (canRemove(member)) {
+            <button mat-button color="warn" type="button" (click)="remove(member)">
+              {{ isSelf(member) ? 'Leave' : 'Remove' }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

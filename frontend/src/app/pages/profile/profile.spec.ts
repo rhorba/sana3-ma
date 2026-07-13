@@ -148,7 +148,6 @@ describe('Profile', () => {
       ArtisanProfileActions.saveProfileSuccess({
         response: {
           id: 'profile-1',
-          userId: 'user-1',
           displayName: 'Yassine Zellige',
           craftType: 'Zellige tiling',
           region: 'Fes',

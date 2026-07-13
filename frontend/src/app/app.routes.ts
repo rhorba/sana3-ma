@@ -31,6 +31,12 @@ export const routes: Routes = [
     canActivate: [artisanGuard],
   },
   {
+    path: 'profile/members',
+    loadComponent: () =>
+      import('./pages/cooperative-members/cooperative-members').then((m) => m.CooperativeMembers),
+    canActivate: [artisanGuard],
+  },
+  {
     path: 'browse',
     loadComponent: () => import('./pages/browse/browse').then((m) => m.Browse),
   },

@@ -10,6 +10,7 @@
       <a mat-button routerLink="/profile">Profile</a>
       <a mat-button routerLink="/profile/products">My Products</a>
       <a mat-button routerLink="/profile/orders">Incoming Orders</a>
+      <a mat-button routerLink="/profile/members">Members</a>
     }
     <button mat-button (click)="logout()">Log Out</button>
   } @else {
@@ -17,6 +18,16 @@
     <a mat-button routerLink="/register">Register</a>
   }
 </mat-toolbar>
+
+@if (pendingInvites().length > 0) {
+  <div class="invite-banner">
+    @for (invite of pendingInvites(); track invite.id) {
+      <span>{{ invite.artisanDisplayName ?? 'A cooperative' }} invited you to join.</span>
+      <button mat-button color="primary" type="button" (click)="acceptInvite(invite.id)">Accept</button>
+      <button mat-button type="button" (click)="declineInvite(invite.id)">Decline</button>
+    }
+  </div>
+}
 
 <main>
   <router-outlet />

@@ -11,7 +11,6 @@ import { ArtisanProfileEffects } from './artisan-profile.effects';
 describe('ArtisanProfileEffects', () => {
   const response = {
     id: 'profile-1',
-    userId: 'user-1',
     displayName: 'Yassine Zellige',
     craftType: 'Zellige tiling',
     region: 'Fes',

@@ -1,6 +1,5 @@
 export interface ArtisanProfileState {
   id: string | null;
-  userId: string | null;
   displayName: string | null;
   craftType: string | null;
   region: string | null;
@@ -14,7 +13,6 @@ export interface ArtisanProfileState {
 
 export const initialArtisanProfileState: ArtisanProfileState = {
   id: null,
-  userId: null,
   displayName: null,
   craftType: null,
   region: null,

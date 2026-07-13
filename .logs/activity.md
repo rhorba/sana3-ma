@@ -858,3 +858,27 @@ No dedicated docker-compose/infra batch this sprint — no new external service,
 existing Postgres, same as Sprint 3.
 
 Not yet user-confirmed — this is the PLAN artifact for review before EXECUTE starts (project rule 5).
+
+## BATCH 30 2026-07-13 — backend membership data model + migration (Story 7.1)
+User confirmed proceeding through all of Sprint 4 without per-batch approval ("just start executing until
+b36 dont ask for approval") — EXECUTE begins, batches still individually logged/committed/verified per
+project convention, just without stopping to ask.
+New `CooperativeMembership` domain entity + `MembershipRole` enum (OWNER/MEMBER) +
+`CooperativeMembershipRepository` port in the existing `ma.sana3.domain.artisanprofile` package (per the
+plan: this is an ownership-model change to that context, not a new bounded context). Persistence layer
+mirrors `ArtisanProfileRepositoryAdapter`'s exact shape (JPA entity, mapper, Spring Data repo, adapter).
+Flyway V5 creates `cooperative_members` (UNIQUE(user_id) enforcing Assumed Default #2 at the schema level,
+FK to both `users` and `artisan_profiles`, CASCADE on both) and backfills it from every existing
+`artisan_profiles` row (owner becomes `role='OWNER'`) in the same migration.
+Deliberate sequencing deviation from Story 7.1's AC as written: the AC says this migration also drops
+`artisan_profiles.user_id`/its UNIQUE constraint, but doing that now would break the 9 handlers that still
+call `ArtisanProfileRepository.findByUserId` (Batch 31's job) — so this batch is purely additive (new table
+alongside the untouched old column) and the drop moves to Batch 31, once nothing depends on the old column
+anymore. Keeps every commit's `mvn verify` green instead of a broken intermediate state; noted in
+docs/database-sana3-ma.md's migration table (V6, attributed to Batch 31) so the plan and reality match.
+9 new tests (4 `CooperativeMembershipTest` domain, 5 `CooperativeMembershipRepositoryAdapterTest` incl.
+Testcontainers-backed save/find/exists/delete) — all green. Full `mvn verify` across all 5 backend modules
+green (Spotless formatting applied once, no logic changes needed).
+Document-first update: docs/database-sana3-ma.md (ERD, new table schema, index, migration plan rows V5/V6,
+access patterns for resolving a user's cooperative and listing members).
+Committed as (pending).

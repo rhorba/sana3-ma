@@ -9,14 +9,19 @@
 
 ## 2. Entity-Relationship Model
 ```
-users ──1:1──> artisan_profiles   (only when users.role = 'ARTISAN')
-users ──N:1──> roles              (via users.role, enum-backed)
+users ──N:1──> roles                        (via users.role, enum-backed)
+users ──0:1──> cooperative_members ──N:1──> artisan_profiles   (Sprint 4: many users per profile)
 artisan_profiles ──1:N──> products
 users ──1:N──> orders             (buyer)
 orders ──1:N──> order_items
 products ──0:N──> order_items     (ON DELETE SET NULL — snapshot columns preserve history)
 artisan_profiles ──1:N──> order_items
 ```
+As of Sprint 4 (Batch 30), `artisan_profiles` no longer has a direct `user_id` FK — `cooperative_members`
+is the sole source of truth for who can act on a profile, with a `UNIQUE(user_id)` constraint preserving
+the "one user, one cooperative at a time" rule (Assumed Default #2,
+docs/stories-sana3-ma-sprint4.md). The old 1:1 `users -> artisan_profiles` link is superseded, not kept
+alongside the new table — see Batch 31 for the migration that drops `artisan_profiles.user_id`.
 
 ## 3. Schema Design
 ```sql
@@ -94,6 +99,21 @@ so an artisan's fulfillment queue survives product deletion too, and so each lin
 completed/cancelled independently per-artisan on a multi-artisan order (YAGNI default per
 docs/stories-sana3-ma-sprint3.md — no per-order split-shipment UI yet, but the data model doesn't block it).
 
+```sql
+-- Table: cooperative_members (Sprint 4, Batch 30)
+CREATE TABLE cooperative_members (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id             UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  artisan_profile_id  UUID NOT NULL REFERENCES artisan_profiles(id) ON DELETE CASCADE,
+  role                VARCHAR(20) NOT NULL CHECK (role IN ('OWNER','MEMBER')),
+  joined_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+`UNIQUE(user_id)` enforces Assumed Default #2 (one cooperative per user at a time) at the schema level, not
+just in application code — the same enforcement style Sprint 1 used for `artisan_profiles.user_id`, just
+moved to a table that allows many rows per `artisan_profile_id`. Backfilled from every existing
+`artisan_profiles` row (owner becomes `role='OWNER'`) in the same migration that creates the table.
+
 ## 4. Index Strategy
 | Table | Index Name | Columns | Query Pattern |
 |---|---|---|---|
@@ -103,6 +123,7 @@ docs/stories-sana3-ma-sprint3.md — no per-order split-shipment UI yet, but the
 | orders | idx_orders_buyer_user_id | (buyer_user_id) | buyer's own order history |
 | order_items | idx_order_items_order_id | (order_id) | line items for one order |
 | order_items | idx_order_items_artisan_profile_id | (artisan_profile_id) | artisan's fulfillment queue across all orders |
+| cooperative_members | idx_cooperative_members_artisan_profile_id | (artisan_profile_id) | list all members of a cooperative (user_id lookup covered by its UNIQUE constraint) |
 
 Public browsing/search (Batch 13) currently runs an unindexed `LOWER(craft_type)`/`LOWER(region)` filter
 and a `LIKE '%...%'` scan on `name`/`description` — acceptable at sprint-2 data volumes (no test/staging
@@ -117,6 +138,8 @@ case-insensitive index on `products.craft_type` and `artisan_profiles.region`, a
 | V2__create_artisan_profiles.sql | Create `artisan_profiles` table + PostGIS extension enable | Yes (DROP TABLE / DROP EXTENSION) |
 | V3__create_products.sql | Create `products` table, FK to `artisan_profiles` (ON DELETE CASCADE) | Yes (DROP TABLE) |
 | V4__create_orders.sql | Create `orders` + `order_items` tables, snapshot columns, FK to `products` (ON DELETE SET NULL) | Yes (DROP TABLE) |
+| V5__create_cooperative_members.sql | Create `cooperative_members` table, backfill from existing `artisan_profiles` owners | Yes (DROP TABLE) |
+| V6__drop_artisan_profiles_user_id.sql (Batch 31) | Drop `artisan_profiles.user_id` now that `cooperative_members` is the sole ownership source | No (would need to reconstruct from `cooperative_members` OWNER rows) |
 
 ## 6. Access Patterns
 | Use Case | Query Pattern | Index Coverage |
@@ -130,6 +153,8 @@ case-insensitive index on `products.craft_type` and `artisan_profiles.region`, a
 | Place order | INSERT order + order_items in one transaction | primary keys |
 | Buyer order history | SELECT orders by buyer_user_id, JOIN order_items by order_id | idx_orders_buyer_user_id, idx_order_items_order_id |
 | Artisan fulfillment queue | SELECT order_items by artisan_profile_id | idx_order_items_artisan_profile_id |
+| Resolve authenticated user's cooperative (Batch 31 replaces old profile-by-user_id lookup) | SELECT cooperative_members by user_id | UNIQUE(user_id) |
+| List a cooperative's members | SELECT cooperative_members by artisan_profile_id | idx_cooperative_members_artisan_profile_id |
 
 ## 7. Sensitive Data
 - Columns requiring protection: `password_hash` (bcrypt, never returned in API responses), `contact_phone`

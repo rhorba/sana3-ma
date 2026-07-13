@@ -53,8 +53,7 @@ class ProductRepositoryAdapterTest {
         new UserJpaEntity(userId, userId + "@example.com", "hash", Role.ARTISAN, now, now));
     UUID profileId = UUID.randomUUID();
     entityManager.persist(
-        new ArtisanProfileJpaEntity(
-            profileId, userId, "Name", craftType, region, null, null, now, now));
+        new ArtisanProfileJpaEntity(profileId, "Name", craftType, region, null, null, now, now));
     entityManager.flush();
     return profileId;
   }

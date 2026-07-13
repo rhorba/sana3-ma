@@ -26,13 +26,6 @@ class ArtisanProfileRepositoryAdapter implements ArtisanProfileRepository {
   }
 
   @Override
-  public Optional<ArtisanProfile> findByUserId(UUID userId) {
-    return springDataArtisanProfileRepository
-        .findByUserId(userId)
-        .map(ArtisanProfileEntityMapper::toDomain);
-  }
-
-  @Override
   public Optional<ArtisanProfile> findById(UUID id) {
     return springDataArtisanProfileRepository
         .findById(id)

@@ -12,8 +12,9 @@ import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.artisanprofile.ProfileNotFoundException;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
+import ma.sana3.domain.artisanprofile.MembershipRole;
 import ma.sana3.domain.catalog.Product;
 import ma.sana3.domain.catalog.ProductRepository;
 import ma.sana3.domain.user.Role;
@@ -27,19 +28,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class CreateProductHandlerTest {
 
   @Mock private ProductRepository productRepository;
-  @Mock private ArtisanProfileRepository artisanProfileRepository;
+  @Mock private CooperativeMembershipRepository membershipRepository;
 
   private CreateProductHandler handler;
 
   @BeforeEach
   void setUp() {
-    handler = new CreateProductHandler(productRepository, artisanProfileRepository);
+    handler = new CreateProductHandler(productRepository, membershipRepository);
   }
 
   @Test
-  void createsProductForArtisanWithProfile() {
+  void createsProductForArtisanWithMembership() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     CreateProductCommand command =
         new CreateProductCommand(
             userId,
@@ -49,15 +50,37 @@ class CreateProductHandlerTest {
             new BigDecimal("450.00"),
             "MAD",
             "Pottery");
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(productRepository.save(any(Product.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
     ProductResult result = handler.handle(command);
 
-    assertEquals(profile.id(), result.artisanProfileId());
+    assertEquals(artisanProfileId, result.artisanProfileId());
     assertEquals("Zellige Tile Set", result.name());
     assertEquals(new BigDecimal("450.00"), result.priceAmount());
+  }
+
+  @Test
+  void memberCanCreateProductTooNotJustOwner() {
+    UUID userId = UUID.randomUUID();
+    UUID artisanProfileId = UUID.randomUUID();
+    CreateProductCommand command =
+        new CreateProductCommand(
+            userId, Role.ARTISAN, "Name", null, new BigDecimal("10.00"), "MAD", "Craft");
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.MEMBER)));
+    when(productRepository.save(any(Product.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    ProductResult result = handler.handle(command);
+
+    assertEquals(artisanProfileId, result.artisanProfileId());
   }
 
   @Test
@@ -73,12 +96,12 @@ class CreateProductHandlerTest {
   }
 
   @Test
-  void rejectsArtisanWithoutProfile() {
+  void rejectsArtisanWithoutMembership() {
     UUID userId = UUID.randomUUID();
     CreateProductCommand command =
         new CreateProductCommand(
             userId, Role.ARTISAN, "Name", null, new BigDecimal("10.00"), "MAD", "Craft");
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.empty());
+    when(membershipRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
     assertThrows(ProfileNotFoundException.class, () -> handler.handle(command));
 

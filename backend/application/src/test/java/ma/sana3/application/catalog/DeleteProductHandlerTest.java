@@ -9,8 +9,9 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
+import ma.sana3.domain.artisanprofile.MembershipRole;
 import ma.sana3.domain.catalog.Product;
 import ma.sana3.domain.catalog.ProductRepository;
 import ma.sana3.domain.user.Role;
@@ -24,22 +25,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DeleteProductHandlerTest {
 
   @Mock private ProductRepository productRepository;
-  @Mock private ArtisanProfileRepository artisanProfileRepository;
+  @Mock private CooperativeMembershipRepository membershipRepository;
 
   private DeleteProductHandler handler;
 
   @BeforeEach
   void setUp() {
-    handler = new DeleteProductHandler(productRepository, artisanProfileRepository);
+    handler = new DeleteProductHandler(productRepository, membershipRepository);
   }
 
   @Test
   void deletesOwnProduct() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Product existing =
-        Product.create(profile.id(), "Name", null, new BigDecimal("10.00"), "MAD", "Pottery", null);
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        Product.create(
+            artisanProfileId, "Name", null, new BigDecimal("10.00"), "MAD", "Pottery", null);
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(productRepository.findById(existing.id())).thenReturn(Optional.of(existing));
 
     handler.handle(new DeleteProductCommand(userId, Role.ARTISAN, existing.id()));
@@ -50,11 +55,14 @@ class DeleteProductHandlerTest {
   @Test
   void rejectsDeletingSomeoneElsesProduct() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Product othersProduct =
         Product.create(
             UUID.randomUUID(), "Name", null, new BigDecimal("10.00"), "MAD", "Pottery", null);
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(productRepository.findById(othersProduct.id())).thenReturn(Optional.of(othersProduct));
 
     assertThrows(

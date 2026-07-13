@@ -11,8 +11,9 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
+import ma.sana3.domain.artisanprofile.MembershipRole;
 import ma.sana3.domain.catalog.ImageStorage;
 import ma.sana3.domain.catalog.Product;
 import ma.sana3.domain.catalog.ProductRepository;
@@ -27,27 +28,30 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UploadProductImageHandlerTest {
 
   @Mock private ProductRepository productRepository;
-  @Mock private ArtisanProfileRepository artisanProfileRepository;
+  @Mock private CooperativeMembershipRepository membershipRepository;
   @Mock private ImageStorage imageStorage;
 
   private UploadProductImageHandler handler;
 
   @BeforeEach
   void setUp() {
-    handler =
-        new UploadProductImageHandler(productRepository, artisanProfileRepository, imageStorage);
+    handler = new UploadProductImageHandler(productRepository, membershipRepository, imageStorage);
   }
 
   @Test
   void storesImageAndUpdatesProductImageUrl() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Product existing =
-        Product.create(profile.id(), "Name", null, new BigDecimal("10.00"), "MAD", "Pottery", null);
+        Product.create(
+            artisanProfileId, "Name", null, new BigDecimal("10.00"), "MAD", "Pottery", null);
     byte[] content = "fake-image-bytes".getBytes();
     UploadProductImageCommand command =
         new UploadProductImageCommand(userId, Role.ARTISAN, existing.id(), content, "image/jpeg");
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(productRepository.findById(existing.id())).thenReturn(Optional.of(existing));
     when(imageStorage.store(content, "image/jpeg")).thenReturn("generated-key.jpg");
     when(productRepository.save(any(Product.class)))
@@ -62,10 +66,10 @@ class UploadProductImageHandlerTest {
   @Test
   void deletesPreviousImageWhenReplacingOne() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Product existing =
         Product.create(
-            profile.id(),
+            artisanProfileId,
             "Name",
             null,
             new BigDecimal("10.00"),
@@ -75,7 +79,10 @@ class UploadProductImageHandlerTest {
     byte[] content = "fake-image-bytes".getBytes();
     UploadProductImageCommand command =
         new UploadProductImageCommand(userId, Role.ARTISAN, existing.id(), content, "image/png");
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(productRepository.findById(existing.id())).thenReturn(Optional.of(existing));
     when(imageStorage.store(content, "image/png")).thenReturn("new-key.png");
     when(productRepository.save(any(Product.class)))
@@ -111,14 +118,17 @@ class UploadProductImageHandlerTest {
   @Test
   void rejectsUploadForSomeoneElsesProduct() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Product othersProduct =
         Product.create(
             UUID.randomUUID(), "Name", null, new BigDecimal("10.00"), "MAD", "Pottery", null);
     UploadProductImageCommand command =
         new UploadProductImageCommand(
             userId, Role.ARTISAN, othersProduct.id(), "content".getBytes(), "image/jpeg");
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(productRepository.findById(othersProduct.id())).thenReturn(Optional.of(othersProduct));
 
     assertThrows(ProductNotFoundException.class, () -> handler.handle(command));

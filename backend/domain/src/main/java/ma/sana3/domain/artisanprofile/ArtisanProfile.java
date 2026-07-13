@@ -7,7 +7,6 @@ import java.util.UUID;
 public final class ArtisanProfile {
 
   private final UUID id;
-  private final UUID userId;
   private final String displayName;
   private final String craftType;
   private final String region;
@@ -18,7 +17,6 @@ public final class ArtisanProfile {
 
   public ArtisanProfile(
       UUID id,
-      UUID userId,
       String displayName,
       String craftType,
       String region,
@@ -27,7 +25,6 @@ public final class ArtisanProfile {
       Instant createdAt,
       Instant updatedAt) {
     this.id = Objects.requireNonNull(id, "id");
-    this.userId = Objects.requireNonNull(userId, "userId");
     this.displayName = requireNonBlank(displayName, "displayName");
     this.craftType = requireNonBlank(craftType, "craftType");
     this.region = region;
@@ -38,21 +35,16 @@ public final class ArtisanProfile {
   }
 
   public static ArtisanProfile create(
-      UUID userId,
-      String displayName,
-      String craftType,
-      String region,
-      String bio,
-      String contactPhone) {
+      String displayName, String craftType, String region, String bio, String contactPhone) {
     Instant now = Instant.now();
     return new ArtisanProfile(
-        UUID.randomUUID(), userId, displayName, craftType, region, bio, contactPhone, now, now);
+        UUID.randomUUID(), displayName, craftType, region, bio, contactPhone, now, now);
   }
 
   public ArtisanProfile withDetails(
       String displayName, String craftType, String region, String bio, String contactPhone) {
     return new ArtisanProfile(
-        id, userId, displayName, craftType, region, bio, contactPhone, createdAt, Instant.now());
+        id, displayName, craftType, region, bio, contactPhone, createdAt, Instant.now());
   }
 
   private static String requireNonBlank(String value, String field) {
@@ -64,10 +56,6 @@ public final class ArtisanProfile {
 
   public UUID id() {
     return id;
-  }
-
-  public UUID userId() {
-    return userId;
   }
 
   public String displayName() {

@@ -7,8 +7,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.artisanprofile.ProfileNotFoundException;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
 import ma.sana3.domain.order.Order;
 import ma.sana3.domain.order.OrderItem;
 import ma.sana3.domain.order.OrderItemRepository;
@@ -21,17 +21,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class ListArtisanOrderItemsHandler {
 
-  private final ArtisanProfileRepository artisanProfileRepository;
+  private final CooperativeMembershipRepository membershipRepository;
   private final OrderItemRepository orderItemRepository;
   private final OrderRepository orderRepository;
   private final UserRepository userRepository;
 
   public ListArtisanOrderItemsHandler(
-      ArtisanProfileRepository artisanProfileRepository,
+      CooperativeMembershipRepository membershipRepository,
       OrderItemRepository orderItemRepository,
       OrderRepository orderRepository,
       UserRepository userRepository) {
-    this.artisanProfileRepository = artisanProfileRepository;
+    this.membershipRepository = membershipRepository;
     this.orderItemRepository = orderItemRepository;
     this.orderRepository = orderRepository;
     this.userRepository = userRepository;
@@ -41,12 +41,13 @@ public class ListArtisanOrderItemsHandler {
     if (query.userRole() != Role.ARTISAN) {
       throw new NotAnArtisanException();
     }
-    ArtisanProfile profile =
-        artisanProfileRepository
+    var artisanProfileId =
+        membershipRepository
             .findByUserId(query.userId())
+            .map(CooperativeMembership::artisanProfileId)
             .orElseThrow(ProfileNotFoundException::new);
 
-    List<OrderItem> items = orderItemRepository.findByArtisanProfileId(profile.id());
+    List<OrderItem> items = orderItemRepository.findByArtisanProfileId(artisanProfileId);
     if (items.isEmpty()) {
       return List.of();
     }

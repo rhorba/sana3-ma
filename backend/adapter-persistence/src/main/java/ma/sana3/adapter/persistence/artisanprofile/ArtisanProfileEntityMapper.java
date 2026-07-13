@@ -9,7 +9,6 @@ final class ArtisanProfileEntityMapper {
   static ArtisanProfile toDomain(ArtisanProfileJpaEntity entity) {
     return new ArtisanProfile(
         entity.getId(),
-        entity.getUserId(),
         entity.getDisplayName(),
         entity.getCraftType(),
         entity.getRegion(),
@@ -22,7 +21,6 @@ final class ArtisanProfileEntityMapper {
   static ArtisanProfileJpaEntity toEntity(ArtisanProfile profile) {
     return new ArtisanProfileJpaEntity(
         profile.id(),
-        profile.userId(),
         profile.displayName(),
         profile.craftType(),
         profile.region(),

@@ -3,8 +3,8 @@ package ma.sana3.application.catalog;
 import java.util.Set;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.artisanprofile.ProfileNotFoundException;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
 import ma.sana3.domain.catalog.ImageStorage;
 import ma.sana3.domain.catalog.Product;
 import ma.sana3.domain.catalog.ProductRepository;
@@ -20,15 +20,15 @@ public class UploadProductImageHandler {
       Set.of("image/jpeg", "image/png", "image/webp");
 
   private final ProductRepository productRepository;
-  private final ArtisanProfileRepository artisanProfileRepository;
+  private final CooperativeMembershipRepository membershipRepository;
   private final ImageStorage imageStorage;
 
   public UploadProductImageHandler(
       ProductRepository productRepository,
-      ArtisanProfileRepository artisanProfileRepository,
+      CooperativeMembershipRepository membershipRepository,
       ImageStorage imageStorage) {
     this.productRepository = productRepository;
-    this.artisanProfileRepository = artisanProfileRepository;
+    this.membershipRepository = membershipRepository;
     this.imageStorage = imageStorage;
   }
 
@@ -39,14 +39,15 @@ public class UploadProductImageHandler {
     if (!ALLOWED_CONTENT_TYPES.contains(command.contentType())) {
       throw new UnsupportedImageTypeException(command.contentType());
     }
-    ArtisanProfile profile =
-        artisanProfileRepository
+    var artisanProfileId =
+        membershipRepository
             .findByUserId(command.userId())
+            .map(CooperativeMembership::artisanProfileId)
             .orElseThrow(ProfileNotFoundException::new);
     Product existing =
         productRepository
             .findById(command.productId())
-            .filter(product -> product.artisanProfileId().equals(profile.id()))
+            .filter(product -> product.artisanProfileId().equals(artisanProfileId))
             .orElseThrow(ProductNotFoundException::new);
 
     String storageKey = imageStorage.store(command.content(), command.contentType());

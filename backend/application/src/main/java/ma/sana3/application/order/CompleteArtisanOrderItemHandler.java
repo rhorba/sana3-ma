@@ -2,8 +2,8 @@ package ma.sana3.application.order;
 
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.artisanprofile.ProfileNotFoundException;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
 import ma.sana3.domain.order.Order;
 import ma.sana3.domain.order.OrderItem;
 import ma.sana3.domain.order.OrderItemRepository;
@@ -17,17 +17,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class CompleteArtisanOrderItemHandler {
 
-  private final ArtisanProfileRepository artisanProfileRepository;
+  private final CooperativeMembershipRepository membershipRepository;
   private final OrderItemRepository orderItemRepository;
   private final OrderRepository orderRepository;
   private final UserRepository userRepository;
 
   public CompleteArtisanOrderItemHandler(
-      ArtisanProfileRepository artisanProfileRepository,
+      CooperativeMembershipRepository membershipRepository,
       OrderItemRepository orderItemRepository,
       OrderRepository orderRepository,
       UserRepository userRepository) {
-    this.artisanProfileRepository = artisanProfileRepository;
+    this.membershipRepository = membershipRepository;
     this.orderItemRepository = orderItemRepository;
     this.orderRepository = orderRepository;
     this.userRepository = userRepository;
@@ -37,15 +37,16 @@ public class CompleteArtisanOrderItemHandler {
     if (command.userRole() != Role.ARTISAN) {
       throw new NotAnArtisanException();
     }
-    ArtisanProfile profile =
-        artisanProfileRepository
+    var artisanProfileId =
+        membershipRepository
             .findByUserId(command.userId())
+            .map(CooperativeMembership::artisanProfileId)
             .orElseThrow(ProfileNotFoundException::new);
 
     OrderItem item =
         orderItemRepository
             .findById(command.orderItemId())
-            .filter(existing -> existing.artisanProfileId().equals(profile.id()))
+            .filter(existing -> existing.artisanProfileId().equals(artisanProfileId))
             .orElseThrow(OrderItemNotFoundException::new);
 
     Order order = orderRepository.findById(item.orderId()).orElseThrow(OrderNotFoundException::new);

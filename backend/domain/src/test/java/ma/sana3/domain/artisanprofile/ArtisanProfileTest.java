@@ -11,13 +11,10 @@ import org.junit.jupiter.api.Test;
 class ArtisanProfileTest {
 
   @Test
-  void createBuildsProfileForUser() {
-    UUID userId = UUID.randomUUID();
-
+  void createBuildsProfile() {
     ArtisanProfile profile =
-        ArtisanProfile.create(userId, "Fatima Zahra", "Pottery", "Fes", "Bio", "+212600000000");
+        ArtisanProfile.create("Fatima Zahra", "Pottery", "Fes", "Bio", "+212600000000");
 
-    assertEquals(userId, profile.userId());
     assertEquals("Fatima Zahra", profile.displayName());
     assertEquals("Pottery", profile.craftType());
     assertNotNull(profile.id());
@@ -27,14 +24,12 @@ class ArtisanProfileTest {
 
   @Test
   void withDetailsKeepsIdentityAndBumpsUpdatedAt() {
-    ArtisanProfile profile =
-        ArtisanProfile.create(UUID.randomUUID(), "Name", "Craft", null, null, null);
+    ArtisanProfile profile = ArtisanProfile.create("Name", "Craft", null, null, null);
 
     ArtisanProfile updated =
         profile.withDetails("New Name", "New Craft", "Rabat", "New bio", "+212611111111");
 
     assertEquals(profile.id(), updated.id());
-    assertEquals(profile.userId(), updated.userId());
     assertEquals(profile.createdAt(), updated.createdAt());
     assertEquals("New Name", updated.displayName());
     assertEquals("New Craft", updated.craftType());
@@ -47,15 +42,7 @@ class ArtisanProfileTest {
         IllegalArgumentException.class,
         () ->
             new ArtisanProfile(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                " ",
-                "Craft",
-                null,
-                null,
-                null,
-                Instant.now(),
-                Instant.now()));
+                UUID.randomUUID(), " ", "Craft", null, null, null, Instant.now(), Instant.now()));
   }
 
   @Test
@@ -64,14 +51,6 @@ class ArtisanProfileTest {
         IllegalArgumentException.class,
         () ->
             new ArtisanProfile(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                "Name",
-                "",
-                null,
-                null,
-                null,
-                Instant.now(),
-                Instant.now()));
+                UUID.randomUUID(), "Name", "", null, null, null, Instant.now(), Instant.now()));
   }
 }

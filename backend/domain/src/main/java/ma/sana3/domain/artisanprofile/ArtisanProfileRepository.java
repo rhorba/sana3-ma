@@ -9,8 +9,6 @@ public interface ArtisanProfileRepository {
 
   ArtisanProfile save(ArtisanProfile profile);
 
-  Optional<ArtisanProfile> findByUserId(UUID userId);
-
   Optional<ArtisanProfile> findById(UUID id);
 
   List<ArtisanProfile> findByIds(Collection<UUID> ids);

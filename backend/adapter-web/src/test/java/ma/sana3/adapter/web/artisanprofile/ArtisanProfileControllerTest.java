@@ -37,18 +37,10 @@ class ArtisanProfileControllerTest {
 
   @MockitoBean private GetArtisanProfileHandler getArtisanProfileHandler;
 
-  private static ArtisanProfileResult stubResult(UUID userId) {
+  private static ArtisanProfileResult stubResult() {
     Instant now = Instant.now();
     return new ArtisanProfileResult(
-        UUID.randomUUID(),
-        userId,
-        "Fatima Zahra",
-        "Pottery",
-        "Fes",
-        "Bio",
-        "+212600000000",
-        now,
-        now);
+        UUID.randomUUID(), "Fatima Zahra", "Pottery", "Fes", "Bio", "+212600000000", now, now);
   }
 
   private static org.springframework.test.web.servlet.request.RequestPostProcessor asArtisan(
@@ -68,7 +60,7 @@ class ArtisanProfileControllerTest {
   @Test
   void upsertWithValidRequestReturnsOk() throws Exception {
     UUID userId = UUID.randomUUID();
-    when(updateArtisanProfileHandler.handle(any())).thenReturn(stubResult(userId));
+    when(updateArtisanProfileHandler.handle(any())).thenReturn(stubResult());
 
     mockMvc
         .perform(
@@ -124,7 +116,7 @@ class ArtisanProfileControllerTest {
   @Test
   void getReturnsProfileWhenPresent() throws Exception {
     UUID userId = UUID.randomUUID();
-    when(getArtisanProfileHandler.handle(any())).thenReturn(stubResult(userId));
+    when(getArtisanProfileHandler.handle(any())).thenReturn(stubResult());
 
     mockMvc
         .perform(get("/api/v1/artisan-profiles/me").with(asArtisan(userId)))

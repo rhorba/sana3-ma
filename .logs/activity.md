@@ -882,3 +882,34 @@ green (Spotless formatting applied once, no logic changes needed).
 Document-first update: docs/database-sana3-ma.md (ERD, new table schema, index, migration plan rows V5/V6,
 access patterns for resolving a user's cooperative and listing members).
 Committed as 819be26.
+
+## BATCH 31 2026-07-13 — authorization rework across 9 handlers (Story 7.2)
+Swapped every artisan-only handler's ownership lookup from `ArtisanProfileRepository.findByUserId` (the
+old 1:1 assumption) to `CooperativeMembershipRepository.findByUserId(...).map(CooperativeMembership::
+artisanProfileId)` — the exact seam identified during PLAN research. 9 call sites: product CRUD
+(Create/Update/Delete/UploadImage/ListOwn), profile Get/Update, order-item Complete/List. Five of the nine
+(Create/Update/Delete/UploadImage/ListOwnProducts) only ever used `profile.id()`, never any other profile
+field, so they no longer need `ArtisanProfileRepository` as a dependency at all — simpler than before, not
+just different.
+`UpdateArtisanProfileHandler` now does double duty on first profile creation: saves the new
+`ArtisanProfile` and, in the same handler call, creates its `CooperativeMembership` row with
+`role=OWNER` — this is the one place a membership gets created outside Batch 32's invite flow, matching
+Sprint 1's existing "upsert creates on first call" UX with no new user-facing step.
+Domain cleanup completing Story 7.1's deferred half (see Batch 30's sequencing note): `ArtisanProfile` no
+longer carries a `userId` field at all — removed from the domain entity, JPA entity, entity mapper,
+repository port (`findByUserId` gone), web response DTO, and result records. Flyway V6 drops
+`artisan_profiles.user_id`/its UNIQUE constraint now that nothing depends on it. This is a real behavior
+change worth flagging: the profile API response no longer echoes back a `userId` field at all (previously
+always the caller's own id under `/me` anyway) — frontend types will be updated in Batch 33 to match.
+23 tests updated (5 handler test suites got an added "member can act too, not just owner" case proving
+Story 7.2's actual intent — MEMBER and OWNER have equal product/order/profile-edit access — not just
+regression coverage for the refactor). Full `mvn verify` green across all 5 backend modules.
+VERIFY note: rebuilt and ran the full dockerized stack — Flyway migrated a real pre-existing database
+(already at v4 from Sprints 1-3) straight through v5 and v6 with no manual intervention, confirming the
+backfill-then-drop sequence is safe against real data, not just a fresh Testcontainers schema. Live-tested
+register -> upsert profile (confirmed a `cooperative_members` row with `role=OWNER` was created) -> create
+product -> list own products, all against the running API; confirmed via direct `psql` that
+`artisan_profiles.user_id` is genuinely gone from the live schema.
+Document-first update: docs/database-sana3-ma.md already anticipated V6 in Batch 30's entry; no further
+doc changes needed this batch.
+Committed as (pending).

@@ -9,7 +9,6 @@ final class ArtisanProfileResultMapper {
   static ArtisanProfileResult toResult(ArtisanProfile profile) {
     return new ArtisanProfileResult(
         profile.id(),
-        profile.userId(),
         profile.displayName(),
         profile.craftType(),
         profile.region(),

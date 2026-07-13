@@ -32,9 +32,7 @@ class SearchProductsHandlerTest {
 
   @Test
   void composesProductsWithTheirArtisanSummary() {
-    ArtisanProfile artisan =
-        ArtisanProfile.create(
-            java.util.UUID.randomUUID(), "Fatima Zahra", "Pottery", "Fes", null, null);
+    ArtisanProfile artisan = ArtisanProfile.create("Fatima Zahra", "Pottery", "Fes", null, null);
     Product product =
         Product.create(
             artisan.id(),

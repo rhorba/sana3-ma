@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
+import ma.sana3.domain.artisanprofile.MembershipRole;
 import ma.sana3.domain.catalog.Product;
 import ma.sana3.domain.catalog.ProductRepository;
 import ma.sana3.domain.user.Role;
@@ -24,23 +25,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ListOwnProductsHandlerTest {
 
   @Mock private ProductRepository productRepository;
-  @Mock private ArtisanProfileRepository artisanProfileRepository;
+  @Mock private CooperativeMembershipRepository membershipRepository;
 
   private ListOwnProductsHandler handler;
 
   @BeforeEach
   void setUp() {
-    handler = new ListOwnProductsHandler(productRepository, artisanProfileRepository);
+    handler = new ListOwnProductsHandler(productRepository, membershipRepository);
   }
 
   @Test
   void returnsOwnProducts() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Product product =
-        Product.create(profile.id(), "Name", null, new BigDecimal("10.00"), "MAD", "Pottery", null);
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
-    when(productRepository.findByArtisanProfileId(profile.id())).thenReturn(List.of(product));
+        Product.create(
+            artisanProfileId, "Name", null, new BigDecimal("10.00"), "MAD", "Pottery", null);
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.MEMBER)));
+    when(productRepository.findByArtisanProfileId(artisanProfileId)).thenReturn(List.of(product));
 
     List<ProductResult> results = handler.handle(new ListOwnProductsQuery(userId, Role.ARTISAN));
 

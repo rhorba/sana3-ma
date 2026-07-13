@@ -63,7 +63,7 @@ class OrderItemRepositoryAdapterTest {
     UUID artisanProfileId = UUID.randomUUID();
     entityManager.persist(
         new ArtisanProfileJpaEntity(
-            artisanProfileId, artisanUserId, "Name", "Pottery", null, null, null, now, now));
+            artisanProfileId, "Name", "Pottery", null, null, null, now, now));
     UUID productId = UUID.randomUUID();
     entityManager.persist(
         new ProductJpaEntity(

@@ -12,8 +12,9 @@ import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.artisanprofile.ProfileNotFoundException;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
+import ma.sana3.domain.artisanprofile.MembershipRole;
 import ma.sana3.domain.order.Order;
 import ma.sana3.domain.order.OrderItem;
 import ma.sana3.domain.order.OrderItemAlreadyCompletedException;
@@ -31,7 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CompleteArtisanOrderItemHandlerTest {
 
-  @Mock private ArtisanProfileRepository artisanProfileRepository;
+  @Mock private CooperativeMembershipRepository membershipRepository;
   @Mock private OrderItemRepository orderItemRepository;
   @Mock private OrderRepository orderRepository;
   @Mock private UserRepository userRepository;
@@ -42,13 +43,13 @@ class CompleteArtisanOrderItemHandlerTest {
   void setUp() {
     handler =
         new CompleteArtisanOrderItemHandler(
-            artisanProfileRepository, orderItemRepository, orderRepository, userRepository);
+            membershipRepository, orderItemRepository, orderRepository, userRepository);
   }
 
   @Test
   void completesTheArtisansOwnOrderItem() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Order order = Order.place(UUID.randomUUID(), "Address");
     OrderItem item =
         OrderItem.create(
@@ -58,7 +59,7 @@ class CompleteArtisanOrderItemHandlerTest {
             new BigDecimal("10.00"),
             "MAD",
             "Pottery",
-            profile.id(),
+            artisanProfileId,
             1);
     User buyer =
         new User(
@@ -68,7 +69,10 @@ class CompleteArtisanOrderItemHandlerTest {
             Role.BUYER,
             Instant.now(),
             Instant.now());
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(orderItemRepository.findById(item.id())).thenReturn(Optional.of(item));
     when(orderItemRepository.save(any(OrderItem.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
@@ -85,7 +89,7 @@ class CompleteArtisanOrderItemHandlerTest {
   @Test
   void rejectsAnOrderItemBelongingToAnotherArtisan() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     OrderItem item =
         OrderItem.create(
             UUID.randomUUID(),
@@ -96,7 +100,10 @@ class CompleteArtisanOrderItemHandlerTest {
             "Pottery",
             UUID.randomUUID(),
             1);
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(orderItemRepository.findById(item.id())).thenReturn(Optional.of(item));
 
     assertThrows(
@@ -107,7 +114,7 @@ class CompleteArtisanOrderItemHandlerTest {
   @Test
   void rejectsAnAlreadyCompletedItem() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Order order = Order.place(UUID.randomUUID(), "Address");
     OrderItem completed =
         OrderItem.create(
@@ -117,10 +124,13 @@ class CompleteArtisanOrderItemHandlerTest {
                 new BigDecimal("10.00"),
                 "MAD",
                 "Pottery",
-                profile.id(),
+                artisanProfileId,
                 1)
             .complete();
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(orderItemRepository.findById(completed.id())).thenReturn(Optional.of(completed));
     when(orderRepository.findById(order.id())).thenReturn(Optional.of(order));
 
@@ -134,7 +144,7 @@ class CompleteArtisanOrderItemHandlerTest {
   @Test
   void rejectsCompletingAnItemOnACancelledOrder() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Order cancelled = Order.place(UUID.randomUUID(), "Address").cancel();
     OrderItem item =
         OrderItem.create(
@@ -144,9 +154,12 @@ class CompleteArtisanOrderItemHandlerTest {
             new BigDecimal("10.00"),
             "MAD",
             "Pottery",
-            profile.id(),
+            artisanProfileId,
             1);
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
     when(orderItemRepository.findById(item.id())).thenReturn(Optional.of(item));
     when(orderRepository.findById(cancelled.id())).thenReturn(Optional.of(cancelled));
 
@@ -167,9 +180,9 @@ class CompleteArtisanOrderItemHandlerTest {
   }
 
   @Test
-  void rejectsAnArtisanWithoutAProfile() {
+  void rejectsAnArtisanWithoutMembership() {
     UUID userId = UUID.randomUUID();
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.empty());
+    when(membershipRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
     assertThrows(
         ProfileNotFoundException.class,

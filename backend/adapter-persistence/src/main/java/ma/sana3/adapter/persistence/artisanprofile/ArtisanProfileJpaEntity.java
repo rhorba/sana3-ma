@@ -13,9 +13,6 @@ public class ArtisanProfileJpaEntity {
 
   @Id private UUID id;
 
-  @Column(name = "user_id", nullable = false, unique = true)
-  private UUID userId;
-
   @Column(name = "display_name", nullable = false)
   private String displayName;
 
@@ -43,7 +40,6 @@ public class ArtisanProfileJpaEntity {
 
   public ArtisanProfileJpaEntity(
       UUID id,
-      UUID userId,
       String displayName,
       String craftType,
       String region,
@@ -52,7 +48,6 @@ public class ArtisanProfileJpaEntity {
       Instant createdAt,
       Instant updatedAt) {
     this.id = id;
-    this.userId = userId;
     this.displayName = displayName;
     this.craftType = craftType;
     this.region = region;
@@ -64,10 +59,6 @@ public class ArtisanProfileJpaEntity {
 
   public UUID getId() {
     return id;
-  }
-
-  public UUID getUserId() {
-    return userId;
   }
 
   public String getDisplayName() {

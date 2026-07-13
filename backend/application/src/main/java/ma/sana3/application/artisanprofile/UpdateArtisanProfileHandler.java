@@ -2,6 +2,9 @@ package ma.sana3.application.artisanprofile;
 
 import ma.sana3.domain.artisanprofile.ArtisanProfile;
 import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
+import ma.sana3.domain.artisanprofile.MembershipRole;
 import ma.sana3.domain.user.Role;
 import org.springframework.stereotype.Service;
 
@@ -9,9 +12,13 @@ import org.springframework.stereotype.Service;
 public class UpdateArtisanProfileHandler {
 
   private final ArtisanProfileRepository artisanProfileRepository;
+  private final CooperativeMembershipRepository membershipRepository;
 
-  public UpdateArtisanProfileHandler(ArtisanProfileRepository artisanProfileRepository) {
+  public UpdateArtisanProfileHandler(
+      ArtisanProfileRepository artisanProfileRepository,
+      CooperativeMembershipRepository membershipRepository) {
     this.artisanProfileRepository = artisanProfileRepository;
+    this.membershipRepository = membershipRepository;
   }
 
   public ArtisanProfileResult handle(UpdateArtisanProfileCommand command) {
@@ -19,28 +26,34 @@ public class UpdateArtisanProfileHandler {
       throw new NotAnArtisanException();
     }
 
-    ArtisanProfile profile =
-        artisanProfileRepository
-            .findByUserId(command.userId())
-            .map(
-                existing ->
-                    existing.withDetails(
-                        command.displayName(),
-                        command.craftType(),
-                        command.region(),
-                        command.bio(),
-                        command.contactPhone()))
-            .orElseGet(
-                () ->
-                    ArtisanProfile.create(
-                        command.userId(),
-                        command.displayName(),
-                        command.craftType(),
-                        command.region(),
-                        command.bio(),
-                        command.contactPhone()));
+    var membership = membershipRepository.findByUserId(command.userId());
 
-    ArtisanProfile saved = artisanProfileRepository.save(profile);
-    return ArtisanProfileResultMapper.toResult(saved);
+    if (membership.isPresent()) {
+      ArtisanProfile existing =
+          artisanProfileRepository
+              .findById(membership.get().artisanProfileId())
+              .orElseThrow(ProfileNotFoundException::new);
+      ArtisanProfile saved =
+          artisanProfileRepository.save(
+              existing.withDetails(
+                  command.displayName(),
+                  command.craftType(),
+                  command.region(),
+                  command.bio(),
+                  command.contactPhone()));
+      return ArtisanProfileResultMapper.toResult(saved);
+    }
+
+    ArtisanProfile created =
+        artisanProfileRepository.save(
+            ArtisanProfile.create(
+                command.displayName(),
+                command.craftType(),
+                command.region(),
+                command.bio(),
+                command.contactPhone()));
+    membershipRepository.save(
+        CooperativeMembership.create(command.userId(), created.id(), MembershipRole.OWNER));
+    return ArtisanProfileResultMapper.toResult(created);
   }
 }

@@ -5,7 +5,6 @@ import java.util.UUID;
 
 public record ArtisanProfileResult(
     UUID id,
-    UUID userId,
     String displayName,
     String craftType,
     String region,

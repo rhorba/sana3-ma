@@ -11,8 +11,9 @@ import java.util.Optional;
 import java.util.UUID;
 import ma.sana3.application.artisanprofile.NotAnArtisanException;
 import ma.sana3.application.artisanprofile.ProfileNotFoundException;
-import ma.sana3.domain.artisanprofile.ArtisanProfile;
-import ma.sana3.domain.artisanprofile.ArtisanProfileRepository;
+import ma.sana3.domain.artisanprofile.CooperativeMembership;
+import ma.sana3.domain.artisanprofile.CooperativeMembershipRepository;
+import ma.sana3.domain.artisanprofile.MembershipRole;
 import ma.sana3.domain.order.Order;
 import ma.sana3.domain.order.OrderItem;
 import ma.sana3.domain.order.OrderItemRepository;
@@ -29,7 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ListArtisanOrderItemsHandlerTest {
 
-  @Mock private ArtisanProfileRepository artisanProfileRepository;
+  @Mock private CooperativeMembershipRepository membershipRepository;
   @Mock private OrderItemRepository orderItemRepository;
   @Mock private OrderRepository orderRepository;
   @Mock private UserRepository userRepository;
@@ -40,13 +41,13 @@ class ListArtisanOrderItemsHandlerTest {
   void setUp() {
     handler =
         new ListArtisanOrderItemsHandler(
-            artisanProfileRepository, orderItemRepository, orderRepository, userRepository);
+            membershipRepository, orderItemRepository, orderRepository, userRepository);
   }
 
   @Test
   void listsOrderItemsForTheArtisansOwnProfileWithBuyerAndShippingInfo() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
+    UUID artisanProfileId = UUID.randomUUID();
     Order order = Order.place(UUID.randomUUID(), "123 Rue Example, Fes");
     OrderItem item =
         OrderItem.create(
@@ -56,7 +57,7 @@ class ListArtisanOrderItemsHandlerTest {
             new BigDecimal("10.00"),
             "MAD",
             "Pottery",
-            profile.id(),
+            artisanProfileId,
             1);
     User buyer =
         new User(
@@ -66,8 +67,11 @@ class ListArtisanOrderItemsHandlerTest {
             Role.BUYER,
             Instant.now(),
             Instant.now());
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
-    when(orderItemRepository.findByArtisanProfileId(profile.id())).thenReturn(List.of(item));
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.MEMBER)));
+    when(orderItemRepository.findByArtisanProfileId(artisanProfileId)).thenReturn(List.of(item));
     when(orderRepository.findByIds(List.of(order.id()))).thenReturn(List.of(order));
     when(userRepository.findByIds(List.of(order.buyerUserId()))).thenReturn(List.of(buyer));
 
@@ -82,9 +86,12 @@ class ListArtisanOrderItemsHandlerTest {
   @Test
   void returnsEmptyListWhenTheArtisanHasNoOrderItems() {
     UUID userId = UUID.randomUUID();
-    ArtisanProfile profile = ArtisanProfile.create(userId, "Name", "Pottery", null, null, null);
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
-    when(orderItemRepository.findByArtisanProfileId(profile.id())).thenReturn(List.of());
+    UUID artisanProfileId = UUID.randomUUID();
+    when(membershipRepository.findByUserId(userId))
+        .thenReturn(
+            Optional.of(
+                CooperativeMembership.create(userId, artisanProfileId, MembershipRole.OWNER)));
+    when(orderItemRepository.findByArtisanProfileId(artisanProfileId)).thenReturn(List.of());
 
     List<ArtisanOrderItemResult> results =
         handler.handle(new ListArtisanOrderItemsQuery(userId, Role.ARTISAN));
@@ -102,9 +109,9 @@ class ListArtisanOrderItemsHandlerTest {
   }
 
   @Test
-  void rejectsAnArtisanWithoutAProfile() {
+  void rejectsAnArtisanWithoutMembership() {
     UUID userId = UUID.randomUUID();
-    when(artisanProfileRepository.findByUserId(userId)).thenReturn(Optional.empty());
+    when(membershipRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
     assertThrows(
         ProfileNotFoundException.class,

@@ -52,17 +52,17 @@ class CooperativeMembershipRepositoryAdapterTest {
     return userId;
   }
 
-  private UUID persistProfile(UUID ownerUserId) {
+  private UUID persistProfile() {
     ArtisanProfile profile =
         artisanProfileRepository.save(
-            ArtisanProfile.create(ownerUserId, "Cooperative", "Weaving", "Fes", null, null));
+            ArtisanProfile.create("Cooperative", "Weaving", "Fes", null, null));
     return profile.id();
   }
 
   @Test
   void savesAndFindsByUserId() {
     UUID ownerId = persistUser();
-    UUID profileId = persistProfile(ownerId);
+    UUID profileId = persistProfile();
     UUID memberId = persistUser();
 
     membershipRepository.save(
@@ -84,7 +84,7 @@ class CooperativeMembershipRepositoryAdapterTest {
   @Test
   void findsAllMembersOfAProfile() {
     UUID ownerId = persistUser();
-    UUID profileId = persistProfile(ownerId);
+    UUID profileId = persistProfile();
     UUID memberId = persistUser();
     membershipRepository.save(
         CooperativeMembership.create(ownerId, profileId, MembershipRole.OWNER));
@@ -99,7 +99,7 @@ class CooperativeMembershipRepositoryAdapterTest {
   @Test
   void existsByUserIdReflectsMembership() {
     UUID ownerId = persistUser();
-    UUID profileId = persistProfile(ownerId);
+    UUID profileId = persistProfile();
     assertFalse(membershipRepository.existsByUserId(ownerId));
 
     membershipRepository.save(
@@ -111,7 +111,7 @@ class CooperativeMembershipRepositoryAdapterTest {
   @Test
   void deleteRemovesMembership() {
     UUID ownerId = persistUser();
-    UUID profileId = persistProfile(ownerId);
+    UUID profileId = persistProfile();
     CooperativeMembership saved =
         membershipRepository.save(
             CooperativeMembership.create(ownerId, profileId, MembershipRole.OWNER));

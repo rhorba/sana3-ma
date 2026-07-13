@@ -6,7 +6,6 @@ import ma.sana3.application.artisanprofile.ArtisanProfileResult;
 
 public record ArtisanProfileResponse(
     UUID id,
-    UUID userId,
     String displayName,
     String craftType,
     String region,
@@ -17,7 +16,6 @@ public record ArtisanProfileResponse(
   static ArtisanProfileResponse from(ArtisanProfileResult result) {
     return new ArtisanProfileResponse(
         result.id(),
-        result.userId(),
         result.displayName(),
         result.craftType(),
         result.region(),

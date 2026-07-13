@@ -32,8 +32,7 @@ class GetProductDetailHandlerTest {
 
   @Test
   void returnsProductWithArtisanSummary() {
-    ArtisanProfile artisan =
-        ArtisanProfile.create(UUID.randomUUID(), "Fatima Zahra", "Pottery", "Fes", null, null);
+    ArtisanProfile artisan = ArtisanProfile.create("Fatima Zahra", "Pottery", "Fes", null, null);
     Product product =
         Product.create(
             artisan.id(),

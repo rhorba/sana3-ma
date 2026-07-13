@@ -881,4 +881,4 @@ Testcontainers-backed save/find/exists/delete) — all green. Full `mvn verify` 
 green (Spotless formatting applied once, no logic changes needed).
 Document-first update: docs/database-sana3-ma.md (ERD, new table schema, index, migration plan rows V5/V6,
 access patterns for resolving a user's cooperative and listing members).
-Committed as (pending).
+Committed as 819be26.

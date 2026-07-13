@@ -982,4 +982,4 @@ showed the invite form and the OWNER row with no remove action; logged in as the
 pending-invite banner rendered on the very first page after login ("UI Test Coop invited you to join." with
 working Accept/Decline buttons); clicked Accept; confirmed `/profile/members` now lists both users with
 correct roles and only the MEMBER row has a "Leave" action, matching Batch 32's backend rules exactly.
-Committed as (pending).
+Committed as 24867df.

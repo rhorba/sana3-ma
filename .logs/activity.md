@@ -983,3 +983,14 @@ pending-invite banner rendered on the very first page after login ("UI Test Coop
 working Accept/Decline buttons); clicked Accept; confirmed `/profile/members` now lists both users with
 correct roles and only the MEMBER row has a "Leave" action, matching Batch 32's backend rules exactly.
 Committed as 24867df.
+
+## BATCH 34 2026-07-13 — VERIFY: coverage + security scan (Sprint 4)
+Combined backend+frontend line coverage 91.3% (`scripts/check-coverage.sh`, unchanged since Sprint 1 Batch
+9) — comfortably clears the 80% gate. Backend 1612/1729, frontend 880/1000 (226 tests across 30 spec
+files, up from 192 before this sprint plus the pre-existing suite).
+Security scan: Semgrep (0 findings), Gitleaks (0 secrets, 69 commits), Trivy SCA on frontend npm (0
+Critical/High), Trivy image scans on both freshly-built images (0 Critical/High). Backend Maven SCA (Trivy
+fs) was blocked locally by a Maven Central 429 rate-limit on this session's IP — the same recurring pattern
+as Sprint 3's Batch 27, caused by this session's own heavy `mvnw` usage across many batches; not a security
+finding, deferred to Batch 35's CI run which executes on a different network.
+No code changes this batch — verify-only.

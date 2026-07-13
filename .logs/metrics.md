@@ -92,3 +92,30 @@ already reasoned through and documented in `docs/security-sana3-ma.md` as each b
 21-26), consistent with the "scan incidentally as you go" practice that made Sprint 2's Batch 18 clean on
 the first pass.
 
+
+## BATCH 34 2026-07-13 — Sprint 4 VERIFY
+
+### Coverage
+| Scope | Line coverage |
+|---|---|
+| Backend combined (5 modules) | 1612/1729 lines |
+| Frontend (30 spec files, 226 tests) | 880/1000 lines (88.0%) |
+| **Combined backend + frontend** | **91.3%** (2492/2729 lines) |
+
+Gate: ≥80% combined — **PASS**, via `scripts/check-coverage.sh` with CI's exact frontend invocation
+(`--coverage-reporters json-summary --coverage-reporters text`).
+
+### Security scan
+| Scanner | Scope | Result |
+|---|---|---|
+| Semgrep (auto ruleset) | backend/, frontend/src | **0 findings** |
+| Trivy SCA (fs) | backend Maven modules | **blocked locally** — Maven Central 429 rate-limited this session's IP again (same recurring pattern as Sprint 3 Batch 27, triggered by this session's own heavy `mvnw` usage); not a security finding, deferred to Batch 35's CI run on a clean network. |
+| Trivy SCA (fs) | frontend npm (package-lock.json) | **0** Critical/High |
+| Trivy image scan | sana3-ma-backend:latest | **0** (alpine 3.23.5, 1 jar) |
+| Trivy image scan | sana3-ma-frontend:latest | **0** (alpine 3.23.5) |
+| Gitleaks | full git history (69 commits) | **0** secrets found |
+
+Gate: no Critical findings — **PASS** on every scanner that could run locally; the Maven SCA scan is
+deferred to Batch 35's CI run, same pattern as Sprint 3. Sprint 4's new attack surface (cooperative
+membership, invites, cross-member email visibility) was already reasoned through and documented in
+docs/security-sana3-ma.md as each batch shipped it (Batches 30-32).

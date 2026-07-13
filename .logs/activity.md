@@ -994,3 +994,12 @@ fs) was blocked locally by a Maven Central 429 rate-limit on this session's IP �
 as Sprint 3's Batch 27, caused by this session's own heavy `mvnw` usage across many batches; not a security
 finding, deferred to Batch 35's CI run which executes on a different network.
 No code changes this batch — verify-only.
+
+## BATCH 35 2026-07-13 — CI: push, monitor until green (Sprint 4)
+Pushed all 10 Sprint 4 commits (Batches 30-34: membership data model, authorization rework, invites,
+frontend UI, verify) to origin/main. CI run 29287742155 triggered automatically: **all 5 jobs green on the
+first run** (Lint 25s, Security Scan 1m2s, Test+Coverage Gate 2m16s, Build Docker Images 1m57s, Deploy to
+Staging 2s — ~5m40s total). No red-CI diagnose/fix cycle needed. This also resolves Batch 34's deferred
+item — the backend Trivy SCA scan that was blocked locally by a Maven Central rate-limit ran clean on CI's
+network, confirming the local block was a network throttling artifact and not a masked finding, same
+resolution pattern as Sprint 3's Batch 27/28.

@@ -812,3 +812,49 @@ update). CI run 29247751687 triggered automatically: **all 5 jobs green on the f
 Security Scan 48s, Test+Coverage Gate 1m58s, Build Docker Images 1m56s, Deploy to Staging 2s). Sprint 3
 fully closed out: all batches shipped, CI green, coverage 91.1%, zero open critical/high security findings,
 E2E suite (3 specs) green together, video recorded.
+
+## UNDERSTAND 2026-07-13 — Sprint 4 kickoff
+User confirmed starting Sprint 4 planning. Re-read docs/prd-sana3-ma.md §"Out of Scope (future sprints)":
+remaining bullets are QR-authenticated craft certificates, real CMI/Stripe payment (explicitly split out of
+Sprint 3's checkout work — see docs/stories-sana3-ma-sprint3.md Assumed Default #4), DHL export integration,
+cooperative multi-user accounts, plus Kubernetes (gated on real scale need, not proposed). Also carried
+forward from Sprint 2: geo-radius search, still blocked on nothing populating `artisan_profiles.location`.
+No predetermined Sprint 4 scope exists yet — proceeding to BRAINSTORM with the user.
+
+## PLAN 2026-07-13 — Sprint 4 backlog (cooperative multi-user accounts)
+Full backlog written to docs/stories-sana3-ma-sprint4.md (Epic 7: Cooperative Membership — 4 stories).
+User picked this over the recommended simpler-first option (real payment gateway) during BRAINSTORM.
+Researched the current model before writing the plan (fork survey, not guesswork): JWT carries only
+sub/email/role, no profile id; `artisan_profiles.user_id` is a hard UNIQUE schema constraint; the exact
+same "findByUserId then compare artisan_profile_id" ownership check is duplicated across 9 handlers
+(product CRUD/image upload/listing, profile get/update, order-item complete/list); the frontend
+`artisanGuard` is a pure role check with no profile-specific logic; docs/ have zero prior scaffolding for
+this — genuinely greenfield.
+Five Assumed Defaults stated: reuse `artisan_profiles` as the cooperative entity itself rather than a new
+parallel `Cooperative` concept; a user belongs to at most one cooperative (UNIQUE(user_id) on the new
+membership table, avoiding a multi-cooperative switcher UI); two roles only (OWNER can invite/remove,
+both OWNER and MEMBER can manage products/orders/shared profile fields); invites target an existing
+ARTISAN account by email and require the invitee's acceptance (no signup-via-invite, no email delivery
+infra — in-app only); no ownership-transfer story, an OWNER can't leave while other members exist.
+New PII consideration flagged: the members list exposes each member's email to the others (new cross-user
+visibility) — proportionate but to be documented in docs/security-sana3-ma.md when built, same treatment
+Sprint 3 gave buyer PII. Also flagged an enumeration risk on invite creation (don't distinguish "no such
+user" from "not an ARTISAN" in the error).
+
+Batch breakdown (continuing numbering from Sprint 3's B21-B29):
+B30 backend membership data model + migration (cooperative_members table, backfill existing 1:1 owners as
+    OWNER, drop artisan_profiles.user_id/UNIQUE) — Story 7.1
+B31 backend authorization rework across all 9 existing handlers (swap findByUserId call sites for
+    membership-based lookup, same downstream ownership checks) — Story 7.2
+B32 backend invites (cooperative_invites table, invite/accept/decline, list/remove members) — Story 7.3
+B33 frontend cooperative NgRx slice + members management UI (/profile/members, invite form, pending-invite
+    banner on login) — Story 7.4
+B34 VERIFY: coverage (JaCoCo+Vitest) >=80%, security scan (Semgrep/Trivy/Gitleaks)
+B35 CI: push, monitor+fix until green
+B36 SHIP: Playwright E2E (invite -> accept -> shared profile/product/order management from both accounts,
+    member removal), video recording (.recordings/v0.4-[date].webm), sprint retro, final push, SESSION_END
+
+No dedicated docker-compose/infra batch this sprint — no new external service, just new tables in the
+existing Postgres, same as Sprint 3.
+
+Not yet user-confirmed — this is the PLAN artifact for review before EXECUTE starts (project rule 5).

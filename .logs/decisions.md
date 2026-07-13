@@ -30,3 +30,11 @@ Alpine repo, just not yet pulled into the base image layer. Added `RUN apk upgra
 Dockerfiles' final stage rather than pinning specific package versions, so future `docker compose build`
 runs keep picking up Alpine's latest security patches automatically. Neither finding was Critical (the
 documented CI gate only fails on Critical), but both had trivial fixes so fixed anyway rather than deferring.
+
+## BRAINSTORM 2026-07-13 — Sprint 4 scope
+Options presented (ranked simple->complex per YAGNI): real payment gateway (extends existing checkout),
+QR craft certificates (independent greenfield), cooperative multi-user accounts (identity rework), DHL
+export (naturally follows payment). User chose **cooperative multi-user accounts** — a bigger
+architectural scope than the "simplest first" default, explicitly overriding the recommended option
+(payment gateway). Proceeding to PLAN: need to read current identity/auth model (User entity,
+ArtisanProfile ownership) before scoping the multi-user rework.

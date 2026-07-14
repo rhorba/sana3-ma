@@ -25,6 +25,29 @@ export const certificateFeature = createFeature({
       issuingProductId: null,
       error: message,
     })),
+
+    on(CertificateActions.verifyCertificate, (state): CertificateState => ({
+      ...state,
+      verifying: true,
+      verificationResult: null,
+      verificationNotFound: false,
+      verificationError: null,
+    })),
+    on(CertificateActions.verifyCertificateSuccess, (state, { result }): CertificateState => ({
+      ...state,
+      verifying: false,
+      verificationResult: result,
+    })),
+    on(CertificateActions.verifyCertificateNotFound, (state): CertificateState => ({
+      ...state,
+      verifying: false,
+      verificationNotFound: true,
+    })),
+    on(CertificateActions.verifyCertificateFailure, (state, { message }): CertificateState => ({
+      ...state,
+      verifying: false,
+      verificationError: message,
+    })),
   ),
 });
 
@@ -34,4 +57,8 @@ export const {
   selectByProductId,
   selectIssuingProductId,
   selectError,
+  selectVerificationResult,
+  selectVerifying,
+  selectVerificationNotFound,
+  selectVerificationError,
 } = certificateFeature;

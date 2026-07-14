@@ -1,0 +1,28 @@
+<div class="certificate-verify-page">
+  <a routerLink="/">← Sana3.ma</a>
+
+  @if (verifying()) {
+    <p>Verifying…</p>
+  } @else if (notFound()) {
+    <div class="verify-result invalid">
+      <h1>Not a valid certificate</h1>
+      <p>This code doesn't match any certificate we've issued. It may be mistyped or no longer valid.</p>
+    </div>
+  } @else if (error(); as message) {
+    <p class="error-prompt">{{ message }}</p>
+  } @else if (result(); as certificate) {
+    <div class="verify-result valid">
+      <h1>✓ Genuine craft certificate</h1>
+      <dl>
+        <dt>Artisan</dt>
+        <dd>{{ certificate.artisanDisplayName }}</dd>
+        <dt>Product</dt>
+        <dd>{{ certificate.productName }}</dd>
+        <dt>Craft type</dt>
+        <dd>{{ certificate.craftType }}</dd>
+        <dt>Issued</dt>
+        <dd>{{ certificate.issuedAt | date: 'mediumDate' }}</dd>
+      </dl>
+    </div>
+  }
+</div>

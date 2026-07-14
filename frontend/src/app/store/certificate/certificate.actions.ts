@@ -1,6 +1,6 @@
-import { createActionGroup, props } from '@ngrx/store';
+import { createActionGroup, emptyProps, props } from '@ngrx/store';
 
-import { CertificateResponse } from '../../core/certificate/certificate.models';
+import { CertificateResponse, CertificateVerificationResponse } from '../../core/certificate/certificate.models';
 
 export const CertificateActions = createActionGroup({
   source: 'Certificate',
@@ -8,5 +8,11 @@ export const CertificateActions = createActionGroup({
     'Issue Certificate': props<{ productId: string }>(),
     'Issue Certificate Success': props<{ certificate: CertificateResponse }>(),
     'Issue Certificate Failure': props<{ message: string }>(),
+
+    'Verify Certificate': props<{ code: string }>(),
+    'Verify Certificate Success': props<{ result: CertificateVerificationResponse }>(),
+    // An unknown/malformed code is a normal empty state (like a missing product), not an error.
+    'Verify Certificate Not Found': emptyProps(),
+    'Verify Certificate Failure': props<{ message: string }>(),
   },
 });

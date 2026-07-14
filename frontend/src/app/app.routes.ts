@@ -49,6 +49,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/cart/cart').then((m) => m.Cart),
   },
   {
+    path: 'certificates/verify/:code',
+    loadComponent: () =>
+      import('./pages/certificate-verify/certificate-verify').then((m) => m.CertificateVerify),
+  },
+  {
     path: 'checkout',
     loadComponent: () => import('./pages/checkout/checkout').then((m) => m.Checkout),
     canActivate: [authGuard],

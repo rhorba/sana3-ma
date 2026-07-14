@@ -6,6 +6,10 @@ export const {
   selectByProductId,
   selectIssuingProductId,
   selectError: selectCertificateError,
+  selectVerificationResult,
+  selectVerifying,
+  selectVerificationNotFound,
+  selectVerificationError,
 } = certificateFeature;
 
 export function selectCertificateForProduct(productId: string) {

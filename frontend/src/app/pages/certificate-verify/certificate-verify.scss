@@ -1,0 +1,40 @@
+.certificate-verify-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 480px;
+}
+
+.verify-result {
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+
+  &.valid {
+    border-color: var(--mat-sys-tertiary, green);
+  }
+
+  &.invalid {
+    border-color: var(--mat-sys-error);
+  }
+}
+
+dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+dt {
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+dd {
+  margin: 0;
+}
+
+.error-prompt {
+  color: var(--mat-sys-error);
+}

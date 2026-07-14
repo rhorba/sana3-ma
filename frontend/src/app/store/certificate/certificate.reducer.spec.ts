@@ -30,4 +30,48 @@ describe('certificateReducer', () => {
     expect(state.error).toBe('boom');
     expect(state.issuingProductId).toBeNull();
   });
+
+  const verificationResult = {
+    artisanDisplayName: 'Atlas Coop',
+    productName: 'Rug',
+    craftType: 'Weaving',
+    issuedAt: '2026-01-01T00:00:00Z',
+  };
+
+  it('sets verifying and clears prior results on verifyCertificate', () => {
+    const state = certificateReducer(
+      { ...initialCertificateState, verificationResult, verificationNotFound: true },
+      CertificateActions.verifyCertificate({ code: 'some-code' }),
+    );
+    expect(state.verifying).toBe(true);
+    expect(state.verificationResult).toBeNull();
+    expect(state.verificationNotFound).toBe(false);
+  });
+
+  it('stores the result and clears verifying on verifyCertificateSuccess', () => {
+    const state = certificateReducer(
+      { ...initialCertificateState, verifying: true },
+      CertificateActions.verifyCertificateSuccess({ result: verificationResult }),
+    );
+    expect(state.verificationResult).toEqual(verificationResult);
+    expect(state.verifying).toBe(false);
+  });
+
+  it('sets verificationNotFound on verifyCertificateNotFound', () => {
+    const state = certificateReducer(
+      { ...initialCertificateState, verifying: true },
+      CertificateActions.verifyCertificateNotFound(),
+    );
+    expect(state.verificationNotFound).toBe(true);
+    expect(state.verifying).toBe(false);
+  });
+
+  it('records a verification error message on verifyCertificateFailure', () => {
+    const state = certificateReducer(
+      { ...initialCertificateState, verifying: true },
+      CertificateActions.verifyCertificateFailure({ message: 'boom' }),
+    );
+    expect(state.verificationError).toBe('boom');
+    expect(state.verifying).toBe(false);
+  });
 });

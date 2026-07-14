@@ -1185,3 +1185,21 @@ Certificate," saw the "Certificate issued" snackbar, the button switch to "View 
 scannable QR code render inline, and the verification code text appear below it, all end-to-end against
 the live backend from Batches 37-38.
 Committed as e23500e.
+
+## BATCH 40 2026-07-14 — frontend public verification page (Story 8.4)
+Extended the `certificate` slice (not a new one) with a second action pair — `verifyCertificate`/success/
+`notFound`/failure, mirroring the exact "not-found is a normal empty state, distinct from a real failure"
+pattern `loadProductDetail` already established in the catalog slice (Batch 13). New `/certificates/verify/:code`
+route, no guard (public, like `/browse` and `/products/:id`) — `CertificateVerify` page dispatches
+`verifyCertificate` with the route's `code` param on construction and renders one of four states: verifying,
+a valid result (artisan/product/craft-type/issue-date), an explicit "not a valid certificate" message for
+an unknown/malformed code, or a real error message.
+17 new/changed frontend tests (5 reducer, 3 effects incl. the 404-vs-other-error distinction, 5 new page
+component cases) — 214 total frontend tests, all green. Lint and production build both clean.
+VERIFY: full live browser test against the rebuilt dockerized stack, no session/login involved (confirming
+the page truly needs none) — navigated directly to the real certificate issued in Batch 39's live test and
+saw the correct artisan/product/craft-type/date; navigated to a garbage code and saw the "Not a valid
+certificate" message, not an error page or blank screen. Also confirmed the certificate data survived a
+full container recreation (backend/frontend rebuilt, postgres untouched), same persistence-proof pattern
+Sprint 2 Batch 17 established for product images.
+Committed as (pending).

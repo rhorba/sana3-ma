@@ -11,8 +11,15 @@ import { CertificateEffects } from './certificate.effects';
 describe('CertificateEffects', () => {
   const certificate = { id: 'cert-1', productId: 'product-1', issuedAt: '2026-01-01T00:00:00Z' };
 
+  const verificationResult = {
+    artisanDisplayName: 'Atlas Coop',
+    productName: 'Rug',
+    craftType: 'Weaving',
+    issuedAt: '2026-01-01T00:00:00Z',
+  };
+
   let actions$: Observable<Action>;
-  let certificateService: { issue: ReturnType<typeof vi.fn> };
+  let certificateService: { issue: ReturnType<typeof vi.fn>; verify: ReturnType<typeof vi.fn> };
   let effects: CertificateEffects;
 
   function setup(): void {
@@ -27,7 +34,7 @@ describe('CertificateEffects', () => {
   }
 
   beforeEach(() => {
-    certificateService = { issue: vi.fn() };
+    certificateService = { issue: vi.fn(), verify: vi.fn() };
   });
 
   it('issueCertificate$ maps a successful issue to issueCertificateSuccess', async () => {
@@ -71,5 +78,40 @@ describe('CertificateEffects', () => {
     const result = await firstValueFrom(effects.issueCertificate$);
 
     expect(result).toEqual(CertificateActions.issueCertificateFailure({ message: 'No product found' }));
+  });
+
+  it('verifyCertificate$ maps a successful verification to verifyCertificateSuccess', async () => {
+    certificateService.verify.mockReturnValue(of(verificationResult));
+    actions$ = of(CertificateActions.verifyCertificate({ code: 'some-code' }));
+    setup();
+
+    const result = await firstValueFrom(effects.verifyCertificate$);
+
+    expect(certificateService.verify).toHaveBeenCalledWith('some-code');
+    expect(result).toEqual(CertificateActions.verifyCertificateSuccess({ result: verificationResult }));
+  });
+
+  it('verifyCertificate$ maps a 404 to verifyCertificateNotFound', async () => {
+    certificateService.verify.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    actions$ = of(CertificateActions.verifyCertificate({ code: 'unknown-code' }));
+    setup();
+
+    const result = await firstValueFrom(effects.verifyCertificate$);
+
+    expect(result).toEqual(CertificateActions.verifyCertificateNotFound());
+  });
+
+  it('verifyCertificate$ falls back to a generic message on other failures', async () => {
+    certificateService.verify.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    actions$ = of(CertificateActions.verifyCertificate({ code: 'some-code' }));
+    setup();
+
+    const result = await firstValueFrom(effects.verifyCertificate$);
+
+    expect(result).toEqual(
+      CertificateActions.verifyCertificateFailure({
+        message: "Couldn't verify this certificate. Please try again.",
+      }),
+    );
   });
 });

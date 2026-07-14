@@ -1158,4 +1158,4 @@ real code with no Authorization header at all (confirmed public), then confirmed
 a garbage string (`not-a-uuid`) return the same 404 `CERTIFICATE_NOT_FOUND`, not a 400 or 500.
 Document-first update: docs/security-sana3-ma.md §5 (new public-verification PII/enumeration-safety note,
 same allowlist Sprint 2 Batch 13 established, referencing why a signed scheme wasn't needed).
-Committed as (pending).
+Committed as 6e5b7dc.

@@ -396,3 +396,19 @@ certificates, DHL export integration. Geo-radius search still carried from Sprin
 deferred items (see docs/stories-sana3-ma-sprint4.md "Open Questions"): ownership transfer,
 signup-via-invite, multi-cooperative membership per user. Sprint 5 planning starts fresh with the user
 (UNDERSTAND/BRAINSTORM/PLAN).
+
+## SESSION_PAUSE 2026-07-15 — Sprint 5 mid-B43 (SHIP), user asked to stop here
+User asked to save state and end the session mid-batch. Sprint 5 (Epic 8: Craft Certificates) is
+functionally complete and shipped through CI: Batches 37-42 all done (certificate domain/migration,
+public verification endpoint, frontend issue/view UI with QR code, public verification page, VERIFY,
+CI green at run 29375650649). Batch 43 (SHIP) has the E2E suite written, verified (alone and as part of
+all 5 specs together), and its video saved to `.recordings/v0.5-2026-07-15.webm` — committed as 43919bb.
+Not yet done, and the exact resume point for next session:
+1. Write the Sprint 5 retro in .logs/activity.md (pattern: see "RETRO 2026-07-14" for Sprint 4's).
+2. Write a proper SESSION_END entry in this file replacing/following this pause note.
+3. Final push of the commits already made this session (E2E + doc update, hash 43919bb, plus everything
+   from Batches 37-42 already pushed earlier) — check `git log origin/main..HEAD` first since some of this
+   may already be on origin.
+4. Monitor CI on that final push per rule 11.
+No code changes needed — everything from Batches 37-42 is already verified and pushed; batch 43 only needs
+its closing paperwork (retro, session log, confirm-push) to formally close Sprint 5.

@@ -1228,3 +1228,20 @@ jobs green on the first run** (Lint 36s, Test+Coverage Gate 2m20s, Security Scan
 41's deferred item — the backend Trivy SCA scan blocked locally by Maven Central rate-limiting ran clean on
 CI's network, confirming the local block was a network throttling artifact and not a masked finding, same
 resolution pattern as Sprints 3-4.
+
+## BATCH 43 2026-07-15 (IN PROGRESS — session paused mid-batch) — SHIP: Sprint 5 E2E suite + video
+New `e2e/tests/certificate-flows.spec.ts`, one continuous Playwright session covering Stories 8.1-8.4:
+artisan registers, creates a profile and a product, issues a certificate (verification code + QR code both
+render), re-issuing is confirmed idempotent (same code returned), then logs out and hits the public
+`/certificates/verify/{code}` page with no login at all — confirms artisan/product/craft-type render for
+the real code, and a separate check confirms an all-zeros unknown UUID shows the "Not a valid certificate"
+message rather than an error page.
+Verified: `certificate-flows.spec.ts` passes alone, and all five e2e specs (critical-flows, catalog-flows,
+order-flows, cooperative-flows, certificate-flows) pass together. One transient failure seen on the first
+full-suite run — `cooperative-flows.spec.ts` timed out on a `getByLabel('Email').fill(...)` mid-navigation;
+reproduced as a one-off (passed immediately both alone and on a second full-suite run), not a regression
+from this batch's changes, consistent with this project's previously-documented browser-automation
+flakiness under sequential load rather than an app bug.
+Video saved to `.recordings/v0.5-2026-07-15.webm`. docs/test-strategy-sana3-ma.md's release gate checklist
+updated with Sprint 5 evidence (coverage 91.5%, CI run 29375650649, this batch's recording).
+Remaining for B43 (next session): write the Sprint 5 retro, SESSION_END log entry, final commit, and push.

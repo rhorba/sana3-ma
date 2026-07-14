@@ -51,15 +51,17 @@ Feature: Artisan Profile
 - [ ] Business logic: role escalation attempt via registration payload (role field tampering to "ADMIN")
 
 ## 5. Release Gate Criteria
-Evidence below is Sprint 4's (current).
+Evidence below is Sprint 5's (current).
 - [x] All acceptance scenarios pass (Playwright: e2e/tests/critical-flows.spec.ts [Sprint 1],
       catalog-flows.spec.ts [Sprint 2], order-flows.spec.ts [Sprint 3], cooperative-flows.spec.ts
-      [Sprint 4, Stories 7.1-7.4], all four green together, 2026-07-14)
-- [x] Combined unit + integration coverage ≥ 80% (91.3% — see .logs/metrics.md "BATCH 34")
-- [x] No critical/high security findings open (Semgrep/Trivy/Gitleaks clean — see .logs/metrics.md "BATCH 34"
-      and the "BATCH 35" CI confirmation of the one scan blocked locally by rate-limiting)
-- [x] E2E happy path passes and is recorded (`.recordings/v0.4-2026-07-14.webm`)
-- [x] CI green on the branch before SHIP (run 29287742155, all 5 jobs, first try)
+      [Sprint 4], certificate-flows.spec.ts [Sprint 5, Stories 8.1-8.4], all five green together,
+      2026-07-15)
+- [x] Combined unit + integration coverage ≥ 80% (91.5% — see .logs/metrics.md "BATCH 41")
+- [x] No critical/high security findings open (Semgrep/Trivy/Gitleaks clean — see .logs/metrics.md "BATCH 41",
+      incl. a real frontend Docker image CVE fix that batch, and the "BATCH 42" CI confirmation of the one
+      scan blocked locally by rate-limiting)
+- [x] E2E happy path passes and is recorded (`.recordings/v0.5-2026-07-15.webm`)
+- [x] CI green on the branch before SHIP (run 29375650649, all 5 jobs, first try)
 
 ### Test Strategy Validation Checklist
 - [x] Every story maps to at least one acceptance scenario

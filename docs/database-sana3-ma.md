@@ -16,6 +16,8 @@ users ──1:N──> orders             (buyer)
 orders ──1:N──> order_items
 products ──0:N──> order_items     (ON DELETE SET NULL — snapshot columns preserve history)
 artisan_profiles ──1:N──> order_items
+products ──0:1──> craft_certificates   (Sprint 5: at most one certificate per product)
+artisan_profiles ──1:N──> craft_certificates
 ```
 As of Sprint 4 (Batch 30), `artisan_profiles` no longer has a direct `user_id` FK — `cooperative_members`
 is the sole source of truth for who can act on a profile, with a `UNIQUE(user_id)` constraint preserving
@@ -114,17 +116,36 @@ just in application code — the same enforcement style Sprint 1 used for `artis
 moved to a table that allows many rows per `artisan_profile_id`. Backfilled from every existing
 `artisan_profiles` row (owner becomes `role='OWNER'`) in the same migration that creates the table.
 
+```sql
+-- Table: craft_certificates (Sprint 5, Batch 37)
+CREATE TABLE craft_certificates (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id          UUID NOT NULL UNIQUE REFERENCES products(id) ON DELETE CASCADE,
+  artisan_profile_id  UUID NOT NULL REFERENCES artisan_profiles(id) ON DELETE CASCADE,
+  issued_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+`UNIQUE(product_id)` enforces Assumed Default #1 (one certificate per product listing, not per purchased
+unit — docs/stories-sana3-ma-sprint5.md) at the schema level. The certificate's own `id` doubles as its
+public verification code (no separate code column) — it's already an unguessable UUID serving as primary
+key, so a distinct field would be redundant (Sprint 5 PLAN reasoning). `ON DELETE CASCADE` on both FKs
+means a certificate can never outlive the product or profile it certifies, so `VerifyCertificateHandler`
+treats a missing product/profile lookup as a data-integrity bug, not a normal "not found."
+
 ## 4. Index Strategy
 | Table | Index Name | Columns | Query Pattern |
 |---|---|---|---|
 | users | idx_users_email | (email) | login lookup by email (also enforced by UNIQUE) |
-| artisan_profiles | idx_artisan_profiles_user_id | (user_id) | fetch own profile by authenticated user (also enforced by UNIQUE) |
 | products | idx_products_artisan_profile_id | (artisan_profile_id) | list an artisan's own products; ownership joins on write endpoints |
 | orders | idx_orders_buyer_user_id | (buyer_user_id) | buyer's own order history |
 | order_items | idx_order_items_order_id | (order_id) | line items for one order |
 | order_items | idx_order_items_artisan_profile_id | (artisan_profile_id) | artisan's fulfillment queue across all orders |
 | cooperative_members | idx_cooperative_members_artisan_profile_id | (artisan_profile_id) | list all members of a cooperative (user_id lookup covered by its UNIQUE constraint) |
 | cooperative_invites | idx_cooperative_invites_invited_user_id | (invited_user_id) | an invitee's own pending invites |
+| craft_certificates | — | (product_id lookup covered by its UNIQUE constraint; id lookup by primary key) | issue-or-fetch and public verification, no extra index needed |
+
+Correction (Sprint 5): the `idx_artisan_profiles_user_id` row previously listed here was stale — Sprint 4
+Batch 31 dropped `artisan_profiles.user_id` entirely (see §2 above); removed rather than left inaccurate.
 
 Public browsing/search (Batch 13) currently runs an unindexed `LOWER(craft_type)`/`LOWER(region)` filter
 and a `LIKE '%...%'` scan on `name`/`description` — acceptable at sprint-2 data volumes (no test/staging
@@ -142,14 +163,17 @@ case-insensitive index on `products.craft_type` and `artisan_profiles.region`, a
 | V5__create_cooperative_members.sql | Create `cooperative_members` table, backfill from existing `artisan_profiles` owners | Yes (DROP TABLE) |
 | V6__drop_artisan_profiles_user_id.sql (Batch 31) | Drop `artisan_profiles.user_id` now that `cooperative_members` is the sole ownership source | No (would need to reconstruct from `cooperative_members` OWNER rows) |
 | V7__create_cooperative_invites.sql (Batch 32) | Create `cooperative_invites` table (invite/accept/decline lifecycle) | Yes (DROP TABLE) |
+| V8__create_craft_certificates.sql (Batch 37) | Create `craft_certificates` table, `UNIQUE(product_id)` | Yes (DROP TABLE) |
 
 ## 6. Access Patterns
 | Use Case | Query Pattern | Index Coverage |
 |---|---|---|
 | Login | SELECT by email | idx_users_email |
-| Get own profile | SELECT by user_id | idx_artisan_profiles_user_id |
-| Update own profile | UPDATE by user_id | idx_artisan_profiles_user_id |
+| Get own profile | SELECT membership by user_id, then profile by id | membership's UNIQUE(user_id), primary key |
+| Update own profile | Same resolution, then UPDATE by id | membership's UNIQUE(user_id), primary key |
 | List own products | SELECT by artisan_profile_id | idx_products_artisan_profile_id |
+| Issue-or-fetch a certificate | SELECT by product_id | craft_certificates' UNIQUE(product_id) |
+| Public certificate verification | SELECT certificate by id, then product/profile by id | primary keys |
 | Public browse/search | SELECT products JOIN artisan_profiles, filtered + paginated | none yet (see §4) |
 | Product detail | SELECT product by id + artisan_profiles by id | primary keys |
 | Place order | INSERT order + order_items in one transaction | primary keys |

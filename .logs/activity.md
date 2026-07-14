@@ -1112,3 +1112,50 @@ No dedicated docker-compose/infra batch this sprint — no new external service,
 existing Postgres, same as Sprints 3-4.
 
 Not yet user-confirmed — this is the PLAN artifact for review before EXECUTE starts (project rule 5).
+
+## BATCH 37 2026-07-14 — backend certificate domain + migration + issue-or-fetch (Story 8.1)
+New `ma.sana3.domain.certification` package — the third bounded context ADR-1 anticipated from Sprint 1,
+alongside catalog (Sprint 2) and orders (Sprint 3). `CraftCertificate` entity: id, productId,
+artisanProfileId, issuedAt — deliberately no separate `verificationCode` column; the certificate's own `id`
+doubles as its public code (already an unguessable UUID primary key, a distinct field would be redundant —
+Assumed Default reasoning, not a shortcut). Flyway V8 creates `craft_certificates` with `UNIQUE(product_id)`
+enforcing Assumed Default #1 (one certificate per product listing) at the schema level, both FKs
+`ON DELETE CASCADE` so a certificate can never outlive its product or profile.
+`IssueCertificateHandler` mirrors Sprint 4's membership-based ownership pattern exactly (any cooperative
+member, not owner-only, per Assumed Default #2) and is idempotent per Assumed Default #4: `findByProductId`
+first, only `CraftCertificate.issue(...)` + save if none exists yet — re-issuing returns the existing
+certificate rather than erroring.
+8 new tests (3 domain, 5 application incl. the idempotency case and the cross-cooperative ownership
+rejection reusing catalog's existing `ProductNotFoundException`), all green.
+Real bug caught in the persistence test itself (not the app) while writing it: the first draft used
+`UUID.randomUUID()` for `artisanProfileId` instead of the actual persisted profile id, which correctly
+violated the new FK constraint — fixed by having the test helper return both the product and profile ids
+it actually persisted.
+VERIFY: full live smoke test against the rebuilt dockerized stack — Flyway migrated straight to v8;
+issued a certificate for a real product, then issued again and confirmed the exact same certificate id
+came back (idempotency holds against a real request, not just a mock).
+Document-first update: docs/database-sana3-ma.md (ERD, new table schema, migration/index/access-pattern
+rows) — also caught and fixed two stale rows left over from Sprint 4 Batch 31 (an index and two access
+patterns still referencing the dropped `artisan_profiles.user_id` column), closing a small doc-accuracy
+gap while in the area rather than leaving it.
+Committed as (pending).
+
+## BATCH 38 2026-07-14 — public certificate verification endpoint (Story 8.2)
+`VerifyCertificateHandler` (unauthenticated): parses the code as a UUID (a malformed string is caught and
+treated as `CertificateNotFoundException`, same 404 as an unknown-but-valid-format code — no distinction,
+so the endpoint can't be used to fingerprint "wrong" vs "garbage" input), looks up the certificate, then
+joins to `Product`/`ArtisanProfile` for display fields. The two follow-up lookups throw
+`IllegalStateException` if missing rather than a normal not-found — the `ON DELETE CASCADE` FKs mean that
+can only happen from a real data-integrity bug, not a legitimate empty state.
+`GET /api/v1/certificates/verify/{code}`, `SecurityConfig` updated to `permitAll` this path (mirrors the
+existing `GET /api/v1/products/**` public rule).
+3 new handler tests (valid code, unknown code, malformed code) plus 2 new web-layer tests (valid response,
+404 mapping) — the public controller test needed `@AutoConfigureMockMvc(addFilters = false)` since
+`SecurityConfig` is package-private and can't be imported into the web slice test, same documented
+workaround `PublicProductControllerTest` already uses.
+VERIFY: live smoke test against the dockerized stack — verified the certificate issued in Batch 37 by its
+real code with no Authorization header at all (confirmed public), then confirmed both an unknown UUID and
+a garbage string (`not-a-uuid`) return the same 404 `CERTIFICATE_NOT_FOUND`, not a 400 or 500.
+Document-first update: docs/security-sana3-ma.md §5 (new public-verification PII/enumeration-safety note,
+same allowlist Sprint 2 Batch 13 established, referencing why a signed scheme wasn't needed).
+Committed as (pending).

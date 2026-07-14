@@ -1024,7 +1024,7 @@ order-flows, cooperative-flows) pass together with no cross-sprint regressions. 
 `.recordings/v0.4-2026-07-14.webm` (gitignored, local only, per rule 9).
 Document-first: updated docs/test-strategy-sana3-ma.md's release gate checklist with Sprint 4 evidence
 (coverage 91.3%, CI run 29287742155, this batch's recording).
-Committed as (pending).
+Committed as c978e46.
 
 ## RETRO 2026-07-14 — Sprint 4 complete (Batches 30-36)
 Shipped: cooperative multi-user accounts end to end — membership data model replacing the old 1:1

@@ -119,3 +119,29 @@ Gate: no Critical findings — **PASS** on every scanner that could run locally;
 deferred to Batch 35's CI run, same pattern as Sprint 3. Sprint 4's new attack surface (cooperative
 membership, invites, cross-member email visibility) was already reasoned through and documented in
 docs/security-sana3-ma.md as each batch shipped it (Batches 30-32).
+
+## BATCH 41 2026-07-15 — Sprint 5 VERIFY
+
+### Coverage
+| Scope | Line coverage |
+|---|---|
+| Backend combined (5 modules) | 1731/1856 lines |
+| Frontend (32+ spec files, 214 tests) | 963/1087 lines (88.6%) |
+| **Combined backend + frontend** | **91.5%** (2694/2943 lines) |
+
+Gate: ≥80% combined — **PASS**, via `scripts/check-coverage.sh` with CI's exact frontend invocation.
+
+### Security scan
+| Scanner | Scope | Result |
+|---|---|---|
+| Semgrep (auto ruleset) | backend/, frontend/src | **0 findings** |
+| Trivy SCA (fs) | backend Maven modules | **blocked locally** — Maven Central 429 rate-limit, same recurring pattern as Sprints 3-4; not a security finding, deferred to Batch 42's CI run. |
+| Trivy SCA (fs) | frontend npm (package-lock.json, incl. new `qrcode` dep) | **0** Critical/High |
+| Trivy image scan | sana3-ma-backend:latest | **0** (alpine 3.23.5, 1 jar) |
+| Trivy image scan | sana3-ma-frontend:latest | **4 HIGH found → fixed this batch**: curl/libcurl CVE-2026-5773, CVE-2026-6276 (new CVEs disclosed against the previously-cached Alpine base since the last rebuild). Fixed by rebuilding with `docker compose build --no-cache frontend` (the Dockerfile's existing `apk upgrade --no-cache` picked up the patched packages once the build actually re-ran instead of reusing a cached layer) — same fix pattern as Sprint 1 Batch 8. Re-scan confirmed **0**. |
+| Gitleaks | full git history (82 commits) | **0** secrets found |
+
+Gate: no Critical findings — **PASS** after the frontend image fix above. Maven SCA deferred to Batch 42's
+CI run on a clean network, same as Sprints 3-4. Sprint 5's new attack surface (public certificate
+verification, no-auth-required allowlisted response) was already reasoned through and documented in
+docs/security-sana3-ma.md as each batch shipped it (Batches 37-38).

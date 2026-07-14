@@ -1203,3 +1203,19 @@ certificate" message, not an error page or blank screen. Also confirmed the cert
 full container recreation (backend/frontend rebuilt, postgres untouched), same persistence-proof pattern
 Sprint 2 Batch 17 established for product images.
 Committed as c74a3c8.
+
+## BATCH 41 2026-07-15 — VERIFY: coverage + security scan (Sprint 5)
+Combined backend+frontend line coverage 91.5% (`scripts/check-coverage.sh`) — comfortably clears the 80%
+gate. Backend 1731/1856, frontend 963/1087 (214 tests).
+Security scan: Semgrep (0 findings), Gitleaks (0 secrets, 82 commits), Trivy SCA on frontend npm incl. the
+new `qrcode` dependency (0 Critical/High), Trivy image scan on the backend image (0). The frontend image
+scan found 4 real HIGH findings (curl/libcurl CVE-2026-5773, CVE-2026-6276) — new CVEs disclosed against
+Alpine packages since this image was last actually rebuilt from scratch, not masked by anything in this
+sprint's own code. Fixed by rebuilding with `docker compose build --no-cache frontend`: the Dockerfile
+already has `apk upgrade --no-cache` from Sprint 1 Batch 8, it just hadn't re-run against a fresh package
+index because Docker's layer cache was reusing the old `apk upgrade` result. Re-scanned clean after the
+rebuild — same fix pattern as Batch 8, now a second confirmed instance of it, worth remembering as a
+recurring category (a currently-clean image can go stale between sprints purely from new upstream CVE
+disclosures, independent of any code change).
+Backend Maven SCA (Trivy fs) blocked locally by the same recurring Maven Central rate-limit as Sprints 3-4;
+not a security finding, deferred to Batch 42's CI run.

@@ -1067,3 +1067,48 @@ CI run 29338362770 triggered automatically: **all 5 jobs green on the first run*
 1m11s, Test+Coverage Gate 2m26s, Build Docker Images 1m52s, Deploy to Staging 3s — ~5m55s total). Sprint 4
 fully closed out: all 7 batches (30-36) shipped, CI green throughout, coverage 91.3%, zero open
 critical/high security findings, E2E suite (4 specs, all sprints) green together, video recorded.
+
+## UNDERSTAND 2026-07-14 — Sprint 5 kickoff
+User confirmed starting Sprint 5 planning. Re-read docs/prd-sana3-ma.md §"Out of Scope (future sprints)":
+remaining bullets after Sprint 4 closed out cooperative accounts are QR-authenticated craft certificates,
+real CMI/Stripe payment gateway (deferred from Sprint 3's own scope-boundary note, and again implicitly
+by Sprint 4 not touching it), DHL export integration, and Kubernetes (gated on real scale need, not
+proposed). Also checked Sprint 4's own "Open Questions" (docs/stories-sana3-ma-sprint4.md): ownership
+transfer, multi-cooperative membership, signup-via-invite — all explicitly deferred-unless-needed, not
+sprint-sized asks on their own. No predetermined Sprint 5 scope exists yet — proceeding to BRAINSTORM.
+
+## PLAN 2026-07-14 — Sprint 5 backlog (QR-authenticated craft certificates)
+Full backlog written to docs/stories-sana3-ma-sprint5.md (Epic 8: Craft Certificates — 4 stories). User
+picked this over the recommended simpler-first option (real payment gateway) during BRAINSTORM, same
+pattern as Sprint 4's pick of cooperative accounts. Chosen from evidence in docs/architecture-sana3-ma.md
+ADR-1, which named "certification" as the third of three bounded contexts anticipated from Sprint 1
+alongside catalog (Sprint 2) and orders (Sprint 3) — this closes out that original plan rather than adding
+scope unplanned. Confirmed genuinely greenfield: zero existing code references "certificat" anywhere.
+Five Assumed Defaults stated: certificates are per-product-listing, not per-purchased-unit or per-order
+(the PRD's "certified provenance" framing is about pre-purchase trust, not proving one specific shipped
+item is genuine — that's a bigger, deferred feature); any cooperative member can issue (not OWNER-only,
+matching Sprint 4's equal-access default); verification is by an unguessable server-issued code, not
+cryptographic signing (sufficient for this sprint's threat model — a signed scheme is real added depth
+deferred until there's a stated need to verify offline/without trusting Sana3.ma's server); issuing is
+idempotent (returns the existing certificate rather than erroring if one already exists); the QR code is
+rendered client-side via a new `qrcode` npm dependency — flagged explicitly since it's the one new
+dependency this sprint adds, no backend image generation/storage needed.
+No new PII surface — the public verification response reuses Sprint 2 Batch 13's existing public-summary
+allowlist (artisan display name, product name/craft type; never contact info).
+
+Batch breakdown (continuing numbering from Sprint 4's B30-B36):
+B37 backend certificate domain + migration + issue-or-fetch handler (new `certification` bounded context,
+    mirrors catalog/order's hexagonal layering) — Story 8.1
+B38 backend public verification endpoint (unauthenticated, allowlisted response) — Story 8.2
+B39 frontend certificate NgRx slice + issue/view UI with QR code in My Products (adds `qrcode` npm dep) —
+    Story 8.3
+B40 frontend public verification page (no route guard) — Story 8.4
+B41 VERIFY: coverage (JaCoCo+Vitest) >=80%, security scan (Semgrep/Trivy/Gitleaks)
+B42 CI: push, monitor+fix until green
+B43 SHIP: Playwright E2E (issue certificate -> scan/verify -> valid and invalid-code cases), video
+    recording (.recordings/v0.5-[date].webm), sprint retro, final push, SESSION_END
+
+No dedicated docker-compose/infra batch this sprint — no new external service, just one new table in the
+existing Postgres, same as Sprints 3-4.
+
+Not yet user-confirmed — this is the PLAN artifact for review before EXECUTE starts (project rule 5).

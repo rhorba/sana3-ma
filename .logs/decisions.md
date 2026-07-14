@@ -38,3 +38,14 @@ export (naturally follows payment). User chose **cooperative multi-user accounts
 architectural scope than the "simplest first" default, explicitly overriding the recommended option
 (payment gateway). Proceeding to PLAN: need to read current identity/auth model (User entity,
 ArtisanProfile ownership) before scoping the multi-user rework.
+
+## BRAINSTORM 2026-07-14 — Sprint 5 scope
+Options presented (ranked simple->complex... though "simple" here means "most natural next" given
+dependencies): real payment gateway (closes a gap flagged twice now, Sprints 3 and 4), QR-authenticated
+craft certificates (independent greenfield, third of the three bounded contexts ADR-1 anticipated from
+Sprint 1 alongside catalog and orders — both now done), DHL export integration (logically depends on real
+payment existing first). User chose **QR-authenticated craft certificates** — again picking the
+independent-greenfield option over the recommended "close the flagged gap" choice, same pattern as
+Sprint 4's pick of cooperative accounts over payment. Proceeding to PLAN: need to design what a
+"certificate" actually is (product-level vs. per-purchase) before scoping stories — greenfield, no existing
+schema/domain to extend.

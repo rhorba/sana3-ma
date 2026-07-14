@@ -72,6 +72,15 @@
   `INVITEE_NOT_ELIGIBLE` error whether the email doesn't exist at all or exists but isn't an ARTISAN account,
   rather than distinguishing the two, so an inviter can't use it to probe arbitrary emails for account
   existence/role.
+- **Public certificate verification (Sprint 5, Batch 37-38)**: `GET /api/v1/certificates/verify/{code}` is
+  unauthenticated by design (that's the point — anyone scanning a QR code can verify it) and returns the
+  same public allowlist Sprint 2 Batch 13 already established for product summaries (artisan display name,
+  product name/craft type) — never `contactPhone`/email. The code itself is the certificate's own UUID
+  primary key, not a separate secret column — its only job is being unguessable enough that verification
+  requires actually having scanned/received it, not proving cryptographic authenticity (see
+  docs/stories-sana3-ma-sprint5.md Assumed Default #3 for why a signed scheme wasn't needed this sprint). A
+  malformed or unknown code both return the same 404, so the endpoint can't be used to distinguish
+  "well-formed but wrong" from "garbage input."
 - **Encryption at rest**: Postgres volume encryption deferred to hosting provider (Docker Compose dev = not encrypted; note for staging/prod hosting choice)
 - **Encryption in transit**: HTTPS enforced in staging/prod (local Docker Compose may run HTTP for simplicity, documented as dev-only)
 - **Secrets management**: env vars via `.env` (git-ignored), dev-safe defaults in `.env.example`, real secrets injected via CI/CD secrets store at deploy time — never committed

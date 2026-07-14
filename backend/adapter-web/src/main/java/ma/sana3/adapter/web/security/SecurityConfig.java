@@ -40,6 +40,8 @@ class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/products/**")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/certificates/**")
+                    .permitAll()
                     .requestMatchers("/actuator/health", "/actuator/info")
                     .permitAll()
                     .requestMatchers("/error")

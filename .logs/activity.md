@@ -1138,7 +1138,7 @@ Document-first update: docs/database-sana3-ma.md (ERD, new table schema, migrati
 rows) — also caught and fixed two stale rows left over from Sprint 4 Batch 31 (an index and two access
 patterns still referencing the dropped `artisan_profiles.user_id` column), closing a small doc-accuracy
 gap while in the area rather than leaving it.
-Committed as (pending).
+Committed as 033170e.
 
 ## BATCH 38 2026-07-14 — public certificate verification endpoint (Story 8.2)
 `VerifyCertificateHandler` (unauthenticated): parses the code as a UUID (a malformed string is caught and

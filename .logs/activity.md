@@ -1219,3 +1219,12 @@ recurring category (a currently-clean image can go stale between sprints purely 
 disclosures, independent of any code change).
 Backend Maven SCA (Trivy fs) blocked locally by the same recurring Maven Central rate-limit as Sprints 3-4;
 not a security finding, deferred to Batch 42's CI run.
+
+## BATCH 42 2026-07-15 — CI: push, monitor until green (Sprint 5)
+Pushed all 9 Sprint 5 commits (Batches 37-41: certificate domain, public verification, frontend issue/view
+UI, public verification page, verify) to origin/main. CI run 29375650649 triggered automatically: **all 5
+jobs green on the first run** (Lint 36s, Test+Coverage Gate 2m20s, Security Scan 51s, Build Docker Images
+2m6s, Deploy to Staging 3s — ~5m56s total). No red-CI diagnose/fix cycle needed. This also resolves Batch
+41's deferred item — the backend Trivy SCA scan blocked locally by Maven Central rate-limiting ran clean on
+CI's network, confirming the local block was a network throttling artifact and not a masked finding, same
+resolution pattern as Sprints 3-4.

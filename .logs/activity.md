@@ -1003,3 +1003,60 @@ Staging 2s — ~5m40s total). No red-CI diagnose/fix cycle needed. This also res
 item — the backend Trivy SCA scan that was blocked locally by a Maven Central rate-limit ran clean on CI's
 network, confirming the local block was a network throttling artifact and not a masked finding, same
 resolution pattern as Sprint 3's Batch 27/28.
+
+## BATCH 36 2026-07-14 — SHIP: Sprint 4 E2E suite + video recording (rule 9)
+New `e2e/tests/cooperative-flows.spec.ts`, one continuous Playwright session covering Stories 7.1-7.4:
+owner registers and creates the cooperative profile + a product; the future member registers first (an
+invite can only target an existing ARTISAN account per Assumed Default #4 — deliberately sequenced this
+way, not a simplification); owner invites the member by email; the member sees the pending-invite banner
+immediately after logging in and accepts it; the members list shows both users with correct roles and the
+invite form is hidden from the non-owner; the member creates a product on the shared profile and the owner
+sees it too (proving Batch 31's equal-access rework end-to-end, not just via curl); owner removes the
+member; the removed member's next login shows the normal "no profile yet" empty state, not an error,
+confirming `GetArtisanProfileHandler`'s 404 is treated as a clean state loss rather than surfacing a scary
+failure.
+One sequencing bug caught while writing the test (not an app bug): the first draft invited the member's
+email before that account existed, which correctly 400'd with `INVITEE_NOT_ELIGIBLE` — same enumeration-safe
+error Batch 32 designed — and broke the test. Fixed by registering the member before the invite, matching
+the real product's actual constraint rather than working around it.
+Verified: `cooperative-flows.spec.ts` passes alone, and all four e2e specs (critical-flows, catalog-flows,
+order-flows, cooperative-flows) pass together with no cross-sprint regressions. Video saved to
+`.recordings/v0.4-2026-07-14.webm` (gitignored, local only, per rule 9).
+Document-first: updated docs/test-strategy-sana3-ma.md's release gate checklist with Sprint 4 evidence
+(coverage 91.3%, CI run 29287742155, this batch's recording).
+Committed as (pending).
+
+## RETRO 2026-07-14 — Sprint 4 complete (Batches 30-36)
+Shipped: cooperative multi-user accounts end to end — membership data model replacing the old 1:1
+artisan-profile-to-user constraint, authorization reworked across all 9 pre-existing artisan-only handlers,
+invite/accept/decline/list-members/remove-member, and the full frontend UI (members page, invite form,
+pending-invite banner). Epic 7 complete, all 4 planned stories shipped, nothing cut from
+docs/stories-sana3-ma-sprint4.md.
+This sprint was a materially different shape of work than Sprints 2-3: instead of adding a new bounded
+context on top of stable ground, it changed the *ownership model* underneath code that had been stable
+since Sprint 1 (artisan profile, product, and order-fulfillment authorization). The PLAN-phase research
+(reading the actual JWT claims, the actual duplicated ownership-check pattern across 9 handlers, and
+confirming `artisan_profiles.user_id` was a real schema constraint, not just an assumption) paid off during
+EXECUTE — no handler was missed, and the "5 of 9 handlers only ever used `profile.id()`, never any other
+field" observation from that research simplified the rework rather than just refactoring it 1:1.
+What deviated from a strict reading of the plan: Story 7.1's AC said the migration should both create
+`cooperative_members` *and* drop `artisan_profiles.user_id` in one step; doing that would have broken the
+9 handlers before Batch 31 could fix them, so the drop was deliberately deferred one batch (additive-first,
+cleanup-second) to keep every commit's `mvn verify` green. Flagged and reasoned through in Batch 30's log
+rather than silently diverging from the written plan.
+What went well: continuous live verification, not just unit tests, caught real integration behavior at
+every layer — Batch 31's rework was confirmed against a real pre-existing database (Flyway migrated straight
+through v5→v6 with real Sprint 1-3 data, not just a fresh Testcontainers schema); Batch 32's invite flow was
+exercised with two real registered users end-to-end including the negative paths (can't remove the owner,
+re-invite after removal works); Batch 33's UI was driven in an actual browser, not just component specs,
+which is how the pending-invite banner and the owner/member permission split were confirmed to actually
+render and gate correctly rather than just type-check.
+Coverage 91.3%, security scan clean (0 Critical/High across Semgrep/Trivy/Gitleaks — the one scan blocked
+locally by Maven Central rate-limiting confirmed clean on CI's network, same recurring pattern as Sprint 3),
+CI green on the first run for every batch this sprint (Batches 30-35), E2E all four specs green together.
+Carried forward: no open Sprint 4 stories. Deferred by this sprint's own stated scope boundary: ownership
+transfer, signup-via-invite, multi-cooperative membership per user (see
+docs/stories-sana3-ma-sprint4.md "Open Questions"). Remaining PRD "Out of Scope (future sprints)" backlog:
+real CMI/Stripe payment gateway integration, QR-authenticated craft certificates, DHL export integration.
+Geo-radius search still carried from Sprint 2, still blocked on nothing populating
+`artisan_profiles.location`.

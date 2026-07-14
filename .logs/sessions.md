@@ -377,3 +377,22 @@ real CMI/Stripe payment gateway integration (deliberately split out of Sprint 3,
 #4), QR-authenticated craft certificates, DHL export integration, cooperative multi-user accounts.
 Geo-radius search ("artisans near me") still carried from Sprint 2, still blocked on nothing populating
 `artisan_profiles.location`. Sprint 4 planning starts fresh with the user (UNDERSTAND/BRAINSTORM/PLAN).
+
+## SESSION_END 2026-07-14 — Sprint 4 complete (Batches 30-36)
+Full batch-by-batch detail in .logs/activity.md ("BATCH 30" through "BATCH 36", plus "RETRO 2026-07-14").
+Summary: shipped cooperative multi-user accounts — membership data model, authorization rework across 9
+pre-existing handlers, invites (create/accept/decline/list/remove), and the full frontend UI (members page,
+invite form, pending-invite banner shown on every page after login). Epic 7 complete, all 4 stories shipped
+as planned. This sprint reworked the ownership model underneath code stable since Sprint 1, rather than
+adding a new bounded context on top of stable ground — the PLAN-phase research into the actual JWT
+claims/ownership-check duplication paid off with a clean, complete rework (verified live against a real
+pre-existing database, not just a fresh test schema). Coverage 91.3%, security scan clean, CI green on the
+first run every batch, E2E suite (4 specs) all green together. Video recorded to
+`.recordings/v0.4-2026-07-14.webm` (local only).
+
+Next session: no predetermined Sprint 5 plan exists. Remaining PRD "Out of Scope (future sprints)" backlog:
+real CMI/Stripe payment gateway integration (deliberately split out of Sprint 3), QR-authenticated craft
+certificates, DHL export integration. Geo-radius search still carried from Sprint 2. This sprint's own
+deferred items (see docs/stories-sana3-ma-sprint4.md "Open Questions"): ownership transfer,
+signup-via-invite, multi-cooperative membership per user. Sprint 5 planning starts fresh with the user
+(UNDERSTAND/BRAINSTORM/PLAN).

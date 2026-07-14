@@ -1184,4 +1184,4 @@ real artisan via direct API calls, created a real product, then drove the actual
 Certificate," saw the "Certificate issued" snackbar, the button switch to "View Certificate," a real
 scannable QR code render inline, and the verification code text appear below it, all end-to-end against
 the live backend from Batches 37-38.
-Committed as (pending).
+Committed as e23500e.

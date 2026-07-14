@@ -1202,4 +1202,4 @@ saw the correct artisan/product/craft-type/date; navigated to a garbage code and
 certificate" message, not an error page or blank screen. Also confirmed the certificate data survived a
 full container recreation (backend/frontend rebuilt, postgres untouched), same persistence-proof pattern
 Sprint 2 Batch 17 established for product images.
-Committed as (pending).
+Committed as c74a3c8.

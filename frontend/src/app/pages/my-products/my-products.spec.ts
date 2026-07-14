@@ -14,6 +14,11 @@ import {
   selectCatalogSaving,
   selectProducts,
 } from '../../store/catalog/catalog.selectors';
+import { CertificateActions } from '../../store/certificate/certificate.actions';
+import {
+  selectByProductId,
+  selectIssuingProductId,
+} from '../../store/certificate/certificate.selectors';
 import { MyProducts } from './my-products';
 
 describe('MyProducts', () => {
@@ -50,6 +55,8 @@ describe('MyProducts', () => {
             { selector: selectCatalogLoaded, value: false },
             { selector: selectCatalogSaving, value: false },
             { selector: selectCatalogError, value: null },
+            { selector: selectByProductId, value: {} },
+            { selector: selectIssuingProductId, value: null },
           ],
         }),
       ],
@@ -181,5 +188,68 @@ describe('MyProducts', () => {
     fixture.detectChanges();
 
     expect(document.body.textContent).toContain('Product added');
+  });
+
+  it('shows "Issue Certificate" when none exists yet, and dispatches issueCertificate on click', () => {
+    store.overrideSelector(selectCatalogLoaded, true);
+    store.overrideSelector(selectProducts, [product]);
+    createComponent();
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
+
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    const issueButton = buttons.find((button) => button.textContent?.includes('Issue Certificate'));
+    expect(issueButton).toBeTruthy();
+    issueButton?.click();
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      CertificateActions.issueCertificate({ productId: product.id }),
+    );
+  });
+
+  it('shows the verification code and switches the button label once a certificate exists', () => {
+    store.overrideSelector(selectCatalogLoaded, true);
+    store.overrideSelector(selectProducts, [product]);
+    store.overrideSelector(selectByProductId, {
+      [product.id]: { id: 'cert-1', productId: product.id, issuedAt: '2026-01-01T00:00:00Z' },
+    });
+    createComponent();
+
+    expect(fixture.nativeElement.querySelector('.verification-code')?.textContent).toContain('cert-1');
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    expect(buttons.some((button) => button.textContent?.includes('View Certificate'))).toBe(true);
+  });
+
+  it('renders a QR code and shows a snackbar when issueCertificateSuccess fires', async () => {
+    store.overrideSelector(selectCatalogLoaded, true);
+    store.overrideSelector(selectProducts, [product]);
+    // The reducer itself is unit-tested separately (certificate.reducer.spec.ts) — this MockStore
+    // doesn't run it, so the certificate-panel's "do we have one" check needs its own override to
+    // render at all, same pattern the "switches the button label" test above already uses.
+    store.overrideSelector(selectByProductId, {
+      [product.id]: { id: 'cert-1', productId: product.id, issuedAt: '2026-01-01T00:00:00Z' },
+    });
+    createComponent();
+
+    actions$.next(
+      CertificateActions.issueCertificateSuccess({
+        certificate: { id: 'cert-1', productId: product.id, issuedAt: '2026-01-01T00:00:00Z' },
+      }),
+    );
+    fixture.detectChanges();
+    // QR rendering is async (qrcode's toString resolves on a microtask).
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(document.body.textContent).toContain('Certificate issued');
+    expect(fixture.nativeElement.querySelector('.qr-code svg')).not.toBeNull();
+  });
+
+  it('shows a snackbar with the backend message when issueCertificateFailure fires', () => {
+    createComponent();
+
+    actions$.next(CertificateActions.issueCertificateFailure({ message: "Couldn't issue a certificate" }));
+    fixture.detectChanges();
+
+    expect(document.body.textContent).toContain("Couldn't issue a certificate");
   });
 });

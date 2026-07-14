@@ -1,4 +1,5 @@
 import { Component, effect, inject, signal } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,9 +9,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Actions, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
+import * as QRCode from 'qrcode';
 
 import { API_ORIGIN } from '../../core/api-origin';
 import { ProductResponse } from '../../core/catalog/catalog.models';
+import { CertificateResponse } from '../../core/certificate/certificate.models';
 import { CatalogActions } from '../../store/catalog/catalog.actions';
 import {
   selectCatalogError,
@@ -19,6 +22,11 @@ import {
   selectCatalogSaving,
   selectProducts,
 } from '../../store/catalog/catalog.selectors';
+import { CertificateActions } from '../../store/certificate/certificate.actions';
+import {
+  selectByProductId,
+  selectIssuingProductId,
+} from '../../store/certificate/certificate.selectors';
 
 @Component({
   selector: 'app-my-products',
@@ -31,6 +39,7 @@ export class MyProducts {
   private readonly store = inject(Store);
   private readonly actions$ = inject(Actions);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly apiOrigin = API_ORIGIN;
   protected readonly products = this.store.selectSignal(selectProducts);
@@ -39,6 +48,10 @@ export class MyProducts {
   protected readonly saving = this.store.selectSignal(selectCatalogSaving);
   protected readonly error = this.store.selectSignal(selectCatalogError);
   protected readonly editingId = signal<string | null>(null);
+
+  protected readonly certificates = this.store.selectSignal(selectByProductId);
+  protected readonly issuingProductId = this.store.selectSignal(selectIssuingProductId);
+  protected readonly qrByProductId = signal<Record<string, SafeHtml>>({});
 
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(150)]],
@@ -79,6 +92,17 @@ export class MyProducts {
     this.actions$
       .pipe(ofType(CatalogActions.uploadProductImageSuccess), takeUntilDestroyed())
       .subscribe(() => this.snackBar.open('Image updated', 'Dismiss', { duration: 3000 }));
+
+    this.actions$
+      .pipe(ofType(CertificateActions.issueCertificateSuccess), takeUntilDestroyed())
+      .subscribe(({ certificate }) => {
+        this.snackBar.open('Certificate issued', 'Dismiss', { duration: 3000 });
+        void this.renderQrCode(certificate);
+      });
+
+    this.actions$
+      .pipe(ofType(CertificateActions.issueCertificateFailure), takeUntilDestroyed())
+      .subscribe(({ message }) => this.snackBar.open(message, 'Dismiss', { duration: 5000 }));
   }
 
   submit(): void {
@@ -124,5 +148,20 @@ export class MyProducts {
       this.store.dispatch(CatalogActions.uploadProductImage({ id: product.id, file }));
     }
     input.value = '';
+  }
+
+  issueCertificate(product: ProductResponse): void {
+    this.store.dispatch(CertificateActions.issueCertificate({ productId: product.id }));
+  }
+
+  private async renderQrCode(certificate: CertificateResponse): Promise<void> {
+    const verificationUrl = `${window.location.origin}/certificates/verify/${certificate.id}`;
+    // SVG string generation has no canvas/DOM dependency (unlike toDataURL), so it renders
+    // identically in the browser and in tests without needing a canvas polyfill.
+    const svg = await QRCode.toString(verificationUrl, { type: 'svg', width: 160 });
+    this.qrByProductId.update((current) => ({
+      ...current,
+      [certificate.productId]: this.sanitizer.bypassSecurityTrustHtml(svg),
+    }));
   }
 }

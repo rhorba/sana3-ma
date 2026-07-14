@@ -81,7 +81,23 @@
             </label>
             <button mat-button type="button" (click)="startEdit(product)">Edit</button>
             <button mat-button type="button" color="warn" (click)="deleteProduct(product)">Delete</button>
+            <button
+              mat-button
+              type="button"
+              [disabled]="issuingProductId() === product.id"
+              (click)="issueCertificate(product)"
+            >
+              {{ certificates()[product.id] ? 'View Certificate' : 'Issue Certificate' }}
+            </button>
           </div>
+          @if (certificates()[product.id]; as certificate) {
+            <div class="certificate-panel">
+              <span class="verification-code">Verification code: {{ certificate.id }}</span>
+              @if (qrByProductId()[product.id]; as qrSvg) {
+                <div class="qr-code" [innerHTML]="qrSvg"></div>
+              }
+            </div>
+          }
         </li>
       }
     </ul>

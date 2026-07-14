@@ -23,6 +23,8 @@ import { orderFeatureKey, orderReducer } from './store/order/order.reducer';
 import { OrderEffects } from './store/order/order.effects';
 import { cooperativeFeatureKey, cooperativeReducer } from './store/cooperative/cooperative.reducer';
 import { CooperativeEffects } from './store/cooperative/cooperative.effects';
+import { certificateFeatureKey, certificateReducer } from './store/certificate/certificate.reducer';
+import { CertificateEffects } from './store/certificate/certificate.effects';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -38,10 +40,18 @@ export const appConfig: ApplicationConfig = {
         [cartFeatureKey]: cartReducer,
         [orderFeatureKey]: orderReducer,
         [cooperativeFeatureKey]: cooperativeReducer,
+        [certificateFeatureKey]: certificateReducer,
       },
       { metaReducers: [cartLocalStorageMetaReducer] },
     ),
-    provideEffects([AuthEffects, ArtisanProfileEffects, CatalogEffects, OrderEffects, CooperativeEffects]),
+    provideEffects([
+      AuthEffects,
+      ArtisanProfileEffects,
+      CatalogEffects,
+      OrderEffects,
+      CooperativeEffects,
+      CertificateEffects,
+    ]),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     // Restore a session from the httpOnly refresh cookie (if any) before the app renders,
     // so route guards don't redirect an already-logged-in user to /login on page reload.

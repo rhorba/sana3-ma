@@ -1291,6 +1291,7 @@ open questions raised by this sprint's own stories.
 Branch: main | Commits already on origin/main as of this entry: 43919bb (E2E suite) and 5fabcb0 (session
 pause log) — both pushed automatically during the session, confirmed via `git fetch origin` +
 `git log origin/main..HEAD` returning empty and `git status` reporting "up to date with 'origin/main'".
-Latest CI run on 5fabcb0 (29377319703): all 5 jobs green (~4m42s). Sprint 5 fully closed out: all 7 batches
-(37-43) shipped, CI green throughout, coverage 91.5%, zero open critical/high security findings, E2E suite
-(5 specs, all sprints) green together, video recorded.
+Latest CI run on 5fabcb0 (29377319703): all 5 jobs green (~4m42s). A follow-up commit (9bf9087, this retro +
+session-end paperwork) was pushed and also ran CI green (run 29391210171, all 5 jobs). Sprint 5 fully closed
+out: all 7 batches (37-43) shipped, CI green throughout, coverage 91.5%, zero open critical/high security
+findings, E2E suite (5 specs, all sprints) green together, video recorded.

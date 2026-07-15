@@ -1245,3 +1245,52 @@ flakiness under sequential load rather than an app bug.
 Video saved to `.recordings/v0.5-2026-07-15.webm`. docs/test-strategy-sana3-ma.md's release gate checklist
 updated with Sprint 5 evidence (coverage 91.5%, CI run 29375650649, this batch's recording).
 Remaining for B43 (next session): write the Sprint 5 retro, SESSION_END log entry, final commit, and push.
+
+## RETRO 2026-07-15 — Sprint 5 complete (Batches 37-43)
+Shipped: QR-authenticated craft certificates end to end — certificate domain model + migration with an
+idempotent issue-or-fetch endpoint (re-issuing a certificate for the same product returns the same
+verification code rather than minting a duplicate), a public no-auth verification endpoint and page at
+`/certificates/verify/:code`, and the artisan-facing issue/view UI on the existing `/profile/products` page
+with an inline QR code (rendered as sanitized SVG via the `qrcode` package, no canvas dependency needed in
+either the browser or Vitest/jsdom). Epic 8 complete, all 4 planned stories (8.1-8.4) shipped, nothing cut
+from docs/stories-sana3-ma-sprint5.md.
+This sprint was closer in shape to Sprint 2/3 (new bounded context added on top of stable ground) than
+Sprint 4's ownership rework — lower integration risk, and it showed: no cross-cutting handler changes, no
+schema drop/rename of existing columns, straightforward additive migration. The one deliberate design
+choice worth carrying forward: choosing `qrcode`'s `toString(url, {type:'svg'})` over `toDataURL` up front
+in Batch 39, specifically to avoid a canvas polyfill dependency in tests — this was decided during PLAN, not
+discovered as a fix later, which is the "document-first" rule working as intended (verified no correction
+was needed for it across Batches 39-43).
+What went well: Batch 40's public verification page reused the exact "not-found is a normal empty state,
+distinct from a real failure" NgRx pattern the catalog slice established back in Sprint 2 Batch 13, rather
+than inventing a new error-handling shape — a case of an old decision paying down borrowing costs three
+sprints later. Live smoke-testing again did work unit tests structurally couldn't: Batch 39 confirmed the
+QR code and verification code actually render in a real browser end to end, and Batch 40 confirmed the
+public page needs no session at all (navigated directly with no login) and survives a full container
+recreation, same persistence-proof pattern as Sprint 2 Batch 17.
+Batch 41 hit a second confirmed instance of a recurring category first seen in Sprint 1 Batch 8: a
+currently-clean Docker image going stale between sprints purely from new upstream CVE disclosures (this
+time curl/libcurl CVE-2026-5773/6276 in the frontend Alpine image), fixed the same way — `docker compose
+build --no-cache` to force `apk upgrade` against a fresh package index rather than reusing a cached layer.
+Worth treating as a standing pre-SHIP check for future sprints rather than a one-off surprise each time.
+One transient E2E flake in Batch 43 (`cooperative-flows.spec.ts` timing out on a form fill mid-navigation)
+reproduced as a one-off — passed alone and on a second full-suite run — consistent with this project's
+already-documented browser-automation flakiness under sequential load, not a regression from this sprint's
+changes.
+Coverage 91.5% (backend 1731/1856, frontend 963/1087, 214 tests), security scan clean after the one Batch
+41 image rebuild (0 Critical/High across Semgrep/Gitleaks/Trivy SCA+image), CI green on the first run for
+every batch this sprint, E2E all five specs (critical-flows, catalog-flows, order-flows, cooperative-flows,
+certificate-flows) green together modulo the one reproduced-as-flaky retry. Video recorded to
+`.recordings/v0.5-2026-07-15.webm`.
+Carried forward: no open Sprint 5 stories. Remaining PRD "Out of Scope (future sprints)" backlog: real
+CMI/Stripe payment gateway integration (deliberately split out of Sprint 3), DHL export integration. Geo-radius
+search still carried from Sprint 2, still blocked on nothing populating `artisan_profiles.location`. No new
+open questions raised by this sprint's own stories.
+
+## PUSH 2026-07-15
+Branch: main | Commits already on origin/main as of this entry: 43919bb (E2E suite) and 5fabcb0 (session
+pause log) — both pushed automatically during the session, confirmed via `git fetch origin` +
+`git log origin/main..HEAD` returning empty and `git status` reporting "up to date with 'origin/main'".
+Latest CI run on 5fabcb0 (29377319703): all 5 jobs green (~4m42s). Sprint 5 fully closed out: all 7 batches
+(37-43) shipped, CI green throughout, coverage 91.5%, zero open critical/high security findings, E2E suite
+(5 specs, all sprints) green together, video recorded.

@@ -397,18 +397,23 @@ deferred items (see docs/stories-sana3-ma-sprint4.md "Open Questions"): ownershi
 signup-via-invite, multi-cooperative membership per user. Sprint 5 planning starts fresh with the user
 (UNDERSTAND/BRAINSTORM/PLAN).
 
-## SESSION_PAUSE 2026-07-15 — Sprint 5 mid-B43 (SHIP), user asked to stop here
-User asked to save state and end the session mid-batch. Sprint 5 (Epic 8: Craft Certificates) is
-functionally complete and shipped through CI: Batches 37-42 all done (certificate domain/migration,
-public verification endpoint, frontend issue/view UI with QR code, public verification page, VERIFY,
-CI green at run 29375650649). Batch 43 (SHIP) has the E2E suite written, verified (alone and as part of
-all 5 specs together), and its video saved to `.recordings/v0.5-2026-07-15.webm` — committed as 43919bb.
-Not yet done, and the exact resume point for next session:
-1. Write the Sprint 5 retro in .logs/activity.md (pattern: see "RETRO 2026-07-14" for Sprint 4's).
-2. Write a proper SESSION_END entry in this file replacing/following this pause note.
-3. Final push of the commits already made this session (E2E + doc update, hash 43919bb, plus everything
-   from Batches 37-42 already pushed earlier) — check `git log origin/main..HEAD` first since some of this
-   may already be on origin.
-4. Monitor CI on that final push per rule 11.
-No code changes needed — everything from Batches 37-42 is already verified and pushed; batch 43 only needs
-its closing paperwork (retro, session log, confirm-push) to formally close Sprint 5.
+## SESSION_END 2026-07-15 — Sprint 5 complete (Batches 37-43)
+Resumed from the prior SESSION_PAUSE mid-B43. Confirmed via `git fetch origin` + `git log origin/main..HEAD`
+(empty) + `git status` ("up to date with 'origin/main'") that everything from this session, including the
+43919bb E2E commit and the 5fabcb0 pause-log commit, was already pushed — no new push was needed, so no new
+CI run was triggered. Confirmed the latest CI run on origin/main (5fabcb0, run 29377319703) was green
+(~4m42s) via `gh run list`. Closed out the remaining B43 paperwork: wrote the Sprint 5 retro and a "PUSH
+2026-07-15" entry in .logs/activity.md, replacing this pause note with this proper SESSION_END.
+Full batch-by-batch detail in .logs/activity.md ("BATCH 37" through "BATCH 43", plus "RETRO 2026-07-15").
+Summary: shipped QR-authenticated craft certificates — idempotent issue-or-fetch, public no-auth
+verification page, artisan issue/view UI with inline QR code (SVG, no canvas dependency). Epic 8 complete,
+all 4 stories shipped as planned. Coverage 91.5%, security scan clean (one frontend image rebuild needed in
+Batch 41 for new upstream CVEs — a second confirmed instance of the Sprint 1 Batch 8 stale-image pattern,
+now worth treating as a standing pre-SHIP check), CI green on the first run every batch, E2E suite (5 specs)
+all green together modulo one reproduced-as-flaky retry in `cooperative-flows.spec.ts` (not a regression).
+Video recorded to `.recordings/v0.5-2026-07-15.webm` (local only).
+
+Next session: no predetermined Sprint 6 plan exists. Remaining PRD "Out of Scope (future sprints)" backlog:
+real CMI/Stripe payment gateway integration (deliberately split out of Sprint 3), DHL export integration.
+Geo-radius search still carried from Sprint 2, still blocked on nothing populating
+`artisan_profiles.location`. Sprint 6 planning starts fresh with the user (UNDERSTAND/BRAINSTORM/PLAN).
